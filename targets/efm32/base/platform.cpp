@@ -8,8 +8,14 @@
 
 #include <base/base.h>
 
+#include <em_chip.h>
+
 void _efm32_startup()
 {
+	// apply EMLIB errata fixes
+	// this is an inline function, so we actually don't need the full emlib component for it, just the headers
+	CHIP_Init();
+
 #if TRACE
     // enable clock to GPIO
 #ifdef CMU_HFBUSCLKEN0_GPIO
