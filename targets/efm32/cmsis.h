@@ -8,5 +8,7 @@
  * Includes the appropriate CMSIS headers for the target device
  */
 
+#pragma once
+
 #define _EFM32_PART_HEADER  <EFM32_PART_HEADER>
 #include _EFM32_PART_HEADER

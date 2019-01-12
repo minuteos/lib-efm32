@@ -8,4 +8,6 @@
  * Replacement of standard em_device.h, includes part-specific header
  */
 
+#pragma once
+
 #include <cmsis.h>
