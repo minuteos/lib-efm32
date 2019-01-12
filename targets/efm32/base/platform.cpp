@@ -45,4 +45,9 @@ void _efm32_startup()
 	ITM->TCR = 0x10009;
 	ITM->TER = ~0u;		// enable all channels
 #endif
+
+#ifdef EFM32_RTC
+	// start RTC as soon as possible
+	EFM32_RTC->Configure();
+#endif
 }
