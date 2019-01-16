@@ -11,6 +11,7 @@
 #include <em_chip.h>
 
 #include <hw/CMU.h>
+#include <hw/GPIO.h>
 
 void _efm32_startup()
 {
@@ -25,6 +26,9 @@ void _efm32_startup()
     // enable default SWO pin (PF2)
     MODMASK(GPIO->P[5].MODEL, _GPIO_P_MODEL_MODE2_MASK, GPIO_P_MODEL_MODE2_PUSHPULL);
     GPIO->ROUTEPEN |= GPIO_ROUTEPEN_SWVPEN;
+#if EFM32_GPIO_DRIVE_CONTROL
+	GPIO->P[5].CTRL = EFM32_GPIO_DRIVE_DEFAULT;
+#endif
 
 	// enable AUXHFRCO
 	CMU->EnableAUXHFRCO();
