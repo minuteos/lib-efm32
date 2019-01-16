@@ -10,6 +10,8 @@
 
 #include <em_chip.h>
 
+#include <hw/CMU.h>
+
 void _efm32_startup()
 {
 	// apply EMLIB errata fixes
@@ -18,17 +20,15 @@ void _efm32_startup()
 
 #if TRACE
     // enable clock to GPIO
-#ifdef CMU_HFBUSCLKEN0_GPIO
-    CMU->HFBUSCLKEN0 |= CMU_HFBUSCLKEN0_GPIO;
-#endif
+	CMU->EnableGPIO();
 
     // enable default SWO pin (PF2)
     MODMASK(GPIO->P[5].MODEL, _GPIO_P_MODEL_MODE2_MASK, GPIO_P_MODEL_MODE2_PUSHPULL);
     GPIO->ROUTEPEN |= GPIO_ROUTEPEN_SWVPEN;
 
 	// enable AUXHFRCO
-	CMU->OSCENCMD = CMU_OSCENCMD_AUXHFRCOEN;
-	while (!(CMU->STATUS & CMU_STATUS_AUXHFRCORDY));
+	CMU->EnableAUXHFRCO();
+	while (!CMU->AUXHFRCOReady());
 
 	ITM->LAR = 0xC5ACCE55;   // unlock
 

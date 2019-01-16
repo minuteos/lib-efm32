@@ -54,6 +54,11 @@ public:
 
 	void EnableLFO();
 
+#ifdef CMU_HFBUSCLKEN0_GPIO
+	bool GPIOEnabled() { return HFBUSCLKEN0 & CMU_HFBUSCLKEN0_GPIO; }
+	void EnableGPIO() { EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_GPIO); }
+#endif
+
 private:
 	void IRQHandler();
 };
