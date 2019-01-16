@@ -15,6 +15,10 @@
 #undef CMU
 #define CMU	CM_PERIPHERAL(_CMU, CMU_BASE)
 
+#if EFM32_LFXO_FREQUENCY && EFM32_LFXO_FREQUENCY != MONO_FREQUENCY
+#error "Only 32768 Hz LF crystal is supported"
+#endif
+
 class _CMU : public CMU_TypeDef
 {
 public:

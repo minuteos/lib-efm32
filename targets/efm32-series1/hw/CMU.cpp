@@ -20,22 +20,24 @@ void _CMU::Configure()
 {
     MYDIAG("Init STATUS: %08X", STATUS);
 
-#if !EFM32_NO_LFXO
+#if EFM32_LFXO_FREQUENCY
     EnableLFXO();
 #endif
-#if defined(EFM32_HFXO_FREQUENCY)
+#if EFM32_HFXO_FREQUENCY
+    // autostart HFXO whenever MCU is running
+    EFM32_BITSET(HFXOCTRL, CMU_HFXOCTRL_AUTOSTARTEM0EM1);
     EnableHFXO();
 #endif
 
-#if (!EFM32_NO_LFXO && !EFM32_WAIT_FOR_LFXO) || \
-    (defined(EFM32_HFXO_FREQUENCY) && !EFM32_WAIT_FOR_HFXO)
+#if (EFM32_LFXO_FREQUENCY && !EFM32_WAIT_FOR_LFXO) || \
+    (EFM32_HFXO_FREQUENCY && !EFM32_WAIT_FOR_HFXO)
     // configure CMU interrupt for when the LFXO starts
     Cortex_SetIRQHandler(CMU_IRQn, GetDelegate(this, &_CMU::IRQHandler));
     NVIC_EnableIRQ(CMU_IRQn);
 #endif
 
     // first configure the low frequency oscillator
-#if EFM32_NO_LFXO
+#if !EFM32_LFXO_FREQUENCY
     // crystal not available, use the LFRCO which starts up quickly so we can wait for it
     EnableLFRCO();
     while (!LFRCOReady());
@@ -76,7 +78,7 @@ void _CMU::Configure()
         LFCCLKSEL = CMU_LFCCLKSEL_LFC_LFRCO;
 #endif
         LFECLKSEL = CMU_LFECLKSEL_LFE_LFRCO;
-        // do not set LFECLKSEL yet, will be set once LFXO is stable
+        // LFxCLKSEL will be switched to LFXO once it is stable
         EFM32_BITSET(IEN, CMU_IEN_LFXORDY);
     }
 #endif
@@ -90,7 +92,7 @@ void _CMU::Configure()
     while (!HFXOReady());
     HFCLKSEL = CMU_HFCLKSEL_HF_HFXO;
 #else
-    EFM32_BITSET(IEN, CMU_IEN_LFXORDY);
+    EFM32_BITSET(IEN, CMU_IEN_HFXORDY);
 #endif
 #endif
 }
@@ -101,7 +103,7 @@ void _CMU::IRQHandler()
 
     MYDIAG("IRQ: %08X", mask);
 
-#if !EFM32_NO_LFXO && !EFM32_WAIT_FOR_LFXO
+#if EFM32_LFXO_FREQUENCY && !EFM32_WAIT_FOR_LFXO
     if (mask & CMU_IFC_LFXORDY)
     {
         LFACLKSEL = CMU_LFACLKSEL_LFA_LFXO;
@@ -114,7 +116,7 @@ void _CMU::IRQHandler()
     }
 #endif
 
-#if defined(EFM32_HFXO_FREQUENCY) && !EFM32_WAIT_FOR_HFXO
+#if EFM32_HFXO_FREQUENCY && !EFM32_WAIT_FOR_HFXO
     if (mask & CMU_IFC_HFXORDY)
     {
         HFCLKSEL = CMU_HFCLKSEL_HF_HFXO;
