@@ -14,3 +14,11 @@
 #ifndef CORTEX_STARTUP_FREQUENCY
 #define CORTEX_STARTUP_FREQUENCY	19000000
 #endif
+
+#ifndef CORTEX_DEEP_SLEEP_ENABLED
+#define CORTEX_DEEP_SLEEP_ENABLED   1   // enabled by default
+#endif
+
+#define CORTEX_DEEP_SLEEP_PREPARE       CMU->DeepSleepPrepare
+#define CORTEX_DEEP_SLEEP_RESTORE       CMU->DeepSleepRestore
+#define CORTEX_DEEP_SLEEP_RESTORE_US    CMU->DeepSleepRestoreMicroseconds

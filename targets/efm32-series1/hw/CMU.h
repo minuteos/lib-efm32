@@ -49,6 +49,22 @@ public:
     void EnableLFXO() { OSCENCMD = CMU_OSCENCMD_LFXOEN; }
     void DisableLFXO() { OSCENCMD = CMU_OSCENCMD_LFXODIS; }
 
+#if EFM32_HFXO_FREQUENCY && EFM32_WAIT_FOR_HFXO
+    //! Configures clocks before going into deep sleep
+    void DeepSleepPrepare() {}
+    //! Restores clocks after wakeup from deep sleep
+    void DeepSleepRestore();
+    //! Estimates microseconds needed to restore full program operation after wakeup from deep sleep
+    unsigned DeepSleepRestoreMicroseconds();
+#else
+    //! Configures clocks before going into deep sleep
+    void DeepSleepPrepare() {}
+    //! Restores clocks after wakeup from deep sleep
+    void DeepSleepRestore() {}
+    //! Estimates microseconds needed to restore full program operation after wakeup from deep sleep
+    unsigned DeepSleepRestoreMicroseconds() { return 16; } // datasheet specifications for various models are around 12 us
+#endif
+
     void EnableLE()
     {
         EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_LE);

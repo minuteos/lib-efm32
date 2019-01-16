@@ -124,3 +124,32 @@ void _CMU::IRQHandler()
     }
 #endif
 }
+
+#if EFM32_HFXO_FREQUENCY && EFM32_WAIT_FOR_HFXO
+
+void _CMU::DeepSleepRestore()
+{
+    ASSERT(HFXOEnabled());
+    // slow down HFRCO to save energy while waiting for HFXO startup
+    // any pending DMA should have been processed by now, as the core wakeup takes around 10 us (i.e. hundreds of clock cycles)
+    auto hfrcoPrev = HFRCOCTRL;
+    HFRCOCTRL = DEVINFO->HFRCOCAL0 | CMU_HFRCOCTRL_CLKDIV_DIV4;
+    while (!HFXOReady());
+    HFCLKSEL = CMU_HFCLKSEL_HF_HFXO;
+    DisableHFRCO();
+    // restore original HFRCO setting
+    HFRCOCTRL = hfrcoPrev;
+}
+
+static constexpr unsigned TO(unsigned periods) { return (periods + 11) / 12; }	// a period is defined as "at least 83 ns" which appears to be 1/12 of a microsecond (83.333...)
+
+unsigned _CMU::DeepSleepRestoreMicroseconds()
+{
+    static constexpr uint16_t s_timeoutTable[] = { TO(2), TO(4), TO(16), TO(32), TO(256), TO(1024), TO(2048), TO(4096), TO(8192), TO(16384), TO(32768) };
+    auto to = HFXOTIMEOUTCTRL;
+    return s_timeoutTable[(to & _CMU_HFXOTIMEOUTCTRL_STARTUPTIMEOUT_MASK) >> _CMU_HFXOTIMEOUTCTRL_STARTUPTIMEOUT_SHIFT] +
+        s_timeoutTable[(to & _CMU_HFXOTIMEOUTCTRL_STEADYTIMEOUT_MASK) >> _CMU_HFXOTIMEOUTCTRL_STEADYTIMEOUT_SHIFT] +
+        100;	// 100 microseconds is a guesstimate for variations in HFXO startup timing
+}
+
+#endif
