@@ -30,7 +30,7 @@ EFM32_PART_HEADER := $(firstword $(sort $(filter-out Simplicity,$(notdir $(wildc
 
 INCLUDE_DIRS += $(EFM32_DEVICE_INCLUDE) $(EFM32_CMSIS_INCLUDE) $(EFM32_EMLIB_INCLUDE)
 DEFINES += EFM32_DEVICE=$(EFM32_DEVICE) EFM32_PART_HEADER=$(EFM32_PART_HEADER)
-COMPONENTS += hw
+COMPONENTS += hw emlib
 
 ifeq (,$(wildcard $(EFM32_SDK_ORIGIN)))
   $(error Failed to locate EFM32 SDK in $(EFM32_SDKS), please specify EFM32_SDK_ORIGIN manually)
