@@ -13,6 +13,9 @@
 
 OPTIMIZE uint32_t _efm32_mono_us()
 {
+    if (!CMU->RTCCEnabled())
+        return 0;
+
     auto hi = RTCC->CNT;
     auto lo = RTCC->COMBCNT;
 
