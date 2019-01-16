@@ -10,8 +10,16 @@
 
 #include <em_cmu.h>
 
+#if CMU_DIAGNOSTICS
+#define MYDIAG(...)   DBGCL("CMU", __VA_ARGS__)
+#else
+#define MYDIAG(...)
+#endif
+
 void _CMU::Configure()
 {
+    MYDIAG("Init STATUS: %08X", STATUS);
+
 #if !EFM32_NO_LFXO
     EnableLFXO();
 #endif
@@ -42,13 +50,14 @@ void _CMU::Configure()
     // LFXO must be running before init will continue
     if (!LFXOReady())
     {
-        DBGCL("CMU", "Waiting for LFXO...");
+        MYDIAG("Waiting for LFXO...");
         while (!LFXOReady());
 #else
     if (LFXOReady())
     {
 #endif
         // LFXO is running
+        MYDIAG("LFXO running...");
         LFACLKSEL = CMU_LFACLKSEL_LFA_LFXO;
         LFBCLKSEL = CMU_LFBCLKSEL_LFB_LFXO;
 #ifdef CMU_LFCCLKSEL_LFC_LFXO
@@ -89,6 +98,8 @@ void _CMU::Configure()
 void _CMU::IRQHandler()
 {
     UNUSED auto mask = IFC;
+
+    MYDIAG("IRQ: %08X", mask);
 
 #if !EFM32_NO_LFXO && !EFM32_WAIT_FOR_LFXO
     if (mask & CMU_IFC_LFXORDY)
