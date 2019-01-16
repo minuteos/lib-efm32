@@ -18,6 +18,9 @@
 class _CMU : public CMU_TypeDef
 {
 public:
+    //!< Initial clock configuration, should be called from startup code 
+    void Configure();
+
     bool HFRCOEnabled() { return STATUS & CMU_STATUS_HFRCOENS; }
     bool HFRCOReady() { return STATUS & CMU_STATUS_HFRCORDY; }
     bool HFRCOBusy() { return SYNCBUSY & CMU_SYNCBUSY_HFRCOBSY; }
@@ -50,9 +53,7 @@ public:
     }
 
     bool RTCCEnabled() { return LFECLKEN0 & CMU_LFECLKEN0_RTCC; }
-    void EnableRTCC() { EnableLFO(); EnableLE(); EFM32_BITSET(LFECLKEN0, CMU_LFECLKEN0_RTCC); }
-
-    void EnableLFO();
+    void EnableRTCC() { EnableLE(); EFM32_BITSET(LFECLKEN0, CMU_LFECLKEN0_RTCC); }
 
 #ifdef CMU_HFBUSCLKEN0_GPIO
     bool GPIOEnabled() { return HFBUSCLKEN0 & CMU_HFBUSCLKEN0_GPIO; }

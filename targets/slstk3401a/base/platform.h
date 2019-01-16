@@ -13,4 +13,6 @@
 // the onboard debugger runs at 4.5 MHz and cannot hit 1MHz debug clock 
 #define SWV_BAUD_RATE   900000
 
+#define EFM32_HFXO_FREQUENCY    40000000
+
 #include_next <base/platform.h>

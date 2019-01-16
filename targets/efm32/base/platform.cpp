@@ -19,6 +19,14 @@ void _efm32_startup()
     // this is an inline function, so we actually don't need the full emlib component for it, just the headers
     CHIP_Init();
 
+    // use the "clear interrupts on read" semantics (reading IFC is the same as IFC = IF)
+    // also enable bus faults when accessing disabled peripherals
+    // silently ignoring these errors sometimes causes very hard to find bugs
+    if (MSC->LOCK & MSC_LOCK_LOCKKEY_LOCKED)
+        MSC->LOCK = MSC_LOCK_LOCKKEY_UNLOCK;
+    MSC->CTRL |= MSC_CTRL_IFCREADCLEAR | MSC_CTRL_CLKDISFAULTEN;
+    MSC->LOCK = MSC_LOCK_LOCKKEY_LOCK;
+
 #if TRACE
     // enable clock to GPIO
     CMU->EnableGPIO();
@@ -49,6 +57,8 @@ void _efm32_startup()
     ITM->TCR = 0x10009;
     ITM->TER = ~0u;		// enable all channels
 #endif
+
+    CMU->Configure();
 
 #ifdef EFM32_RTC
     // start RTC as soon as possible
