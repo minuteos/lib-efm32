@@ -94,6 +94,12 @@ void _CMU::Configure()
 #else
     EFM32_BITSET(IEN, CMU_IEN_HFXORDY);
 #endif
+#elif defined(EFM32_USHFRCO_HFCLK)
+    EnableUSHFRCO();
+    USHFRCOCTRL = DEVINFO->USHFRCOCAL13;
+    CMU_UpdateWaitStates(48000000, 0);
+    while (!USHFRCOReady());
+    HFCLKSEL = CMU_HFCLKSEL_HF_USHFRCO;
 #endif
 }
 
