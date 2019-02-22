@@ -10,7 +10,7 @@
 
 #define MYDBG(...)  DBGCL("EMU", __VA_ARGS__)
 
-#ifdef Ckernel
+#if defined(Ckernel) && defined(_EMU_R5VOUTLEVEL_OUTLEVEL_MASK)
 
 async(_EMU::SetR5VOutputLevel, int mv100)
 async_def()
