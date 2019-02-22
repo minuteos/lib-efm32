@@ -4,7 +4,7 @@
  * for full license information.
  *
  * efm32-rtcc/platform.cpp
- * 
+ *
  * Provides platform-specific implementations for EFM32 MCUs equipped
  * with RTCC module
  */
@@ -23,7 +23,7 @@ OPTIMIZE uint32_t _efm32_mono_us()
     // precisely between the two reads
     if ((hi & MASK(17)) != lo >> 15)
         hi++;
-    
-    auto mono64 = ((int64_t)hi << 15) | lo;   // no need to mask lo as the bits must be equal 
+
+    auto mono64 = ((int64_t)hi << 15) | lo;   // no need to mask lo as the bits must be equal
     return (mono64 * ((int64_t)1000000 << 17)) >> 32;
 }

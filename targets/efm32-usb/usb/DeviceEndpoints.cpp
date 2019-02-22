@@ -31,7 +31,7 @@ async_def_sync()
         ep->Deactivate();
 
     ReleaseBuffers();
-    
+
     if (cfg == NULL)
     {
         USBDEBUG("IN(%d) deactivated", ep->Index());
@@ -79,7 +79,7 @@ void DeviceInEndpoint::TransferComplete()
         usedHalf[epBuf] = 0;
         packetSent = true;
     }
-    
+
     epBuf = !epBuf;
 
     if ((txHalf[epBuf] = usedHalf[epBuf]))
@@ -112,7 +112,7 @@ async_def(
         packetSent = false;
 
         auto txBuf = this->txBuf;
-        
+
         int usedBefore = usedHalf[txBuf];
         if (usedBefore)
         {

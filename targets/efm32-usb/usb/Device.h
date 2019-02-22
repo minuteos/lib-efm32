@@ -24,7 +24,7 @@ typedef Delegate<void, SetupPacket, Span> ControlDelegate;
 class Device
 {
 public:
-    template<typename TStringTable, typename... TConfig> Device(const DeviceDescriptor& deviceDescriptor, 
+    template<typename TStringTable, typename... TConfig> Device(const DeviceDescriptor& deviceDescriptor,
         const TStringTable& strings,
         const TConfig&... configs) :
         deviceDescriptor(deviceDescriptor),
@@ -84,7 +84,7 @@ private:
 
     struct
     {
-        ControlDelegate callback;        
+        ControlDelegate callback;
         Span txRemain;
         SetupPacket setup;
         union
@@ -120,7 +120,7 @@ private:
     void HandleOutControl();
     void HandleIn();
     void HandleInControl();
-    
+
     async(HandleControl);
     void HandleControlStandard(SetupPacket setup);
     void HandleControlGetStatus(SetupPacket setup);
@@ -131,7 +131,7 @@ private:
     async(HandleControlSetConfiguration, SetupPacket setup);
 
     const ConfigDescriptorHeader* FindConfiguration(uint8_t value);
-    
+
     async(ConfigureEndpoints);
     async(ConfigureEndpoint, DeviceInEndpoint& ep, const EndpointDescriptor* cfg);
     async(ConfigureEndpoint, DeviceOutEndpoint& ep, const EndpointDescriptor* cfg);

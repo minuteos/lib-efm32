@@ -40,7 +40,7 @@ async_def()
     // enable DMA and global interrupt mask
     MODMASK(GAHBCFG, _USB_GAHBCFG_DMAEN_MASK | _USB_GAHBCFG_HBSTLEN_MASK | _USB_GAHBCFG_GLBLINTRMSK_MASK,
         USB_GAHBCFG_DMAEN | USB_GAHBCFG_HBSTLEN_INCR8 | USB_GAHBCFG_GLBLINTRMSK);
-    
+
     // reset all interrupts
     IEN = 0;
     IFC = ~0u;

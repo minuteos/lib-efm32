@@ -4,7 +4,7 @@
  * for full license information.
  *
  * efm32/cmsis.h
- * 
+ *
  * Includes the appropriate CMSIS headers for the target device
  */
 

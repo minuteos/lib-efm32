@@ -15,7 +15,7 @@ const EndpointDescriptor* ConfigDescriptorHeader::FindEndpoint(uint8_t address, 
 {
     const DescriptorHeader* end = End();
     bool active = false;
-    
+
     for (const DescriptorHeader* hdr = this; hdr < end; hdr = hdr->Next())
     {
         switch (hdr->bDescriptorType)
@@ -27,7 +27,7 @@ const EndpointDescriptor* ConfigDescriptorHeader::FindEndpoint(uint8_t address, 
                     (alternate < 0 || alternate == ifd->bAlternateSetting);
                 break;
             }
-            
+
             case DescriptorType::Endpoint:
                 if (active)
                 {

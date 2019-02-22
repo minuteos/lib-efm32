@@ -4,7 +4,7 @@
  * for full license information.
  *
  * efm32-rtcc/kernel/platform.h
- * 
+ *
  * Implements monotonic clock required by the kernel using EFM32's RTCC timer
  */
 

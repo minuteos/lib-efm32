@@ -4,7 +4,7 @@
  * for full license information.
  *
  * efm32/em_device.h
- * 
+ *
  * Replacement of standard em_device.h, includes part-specific header
  */
 

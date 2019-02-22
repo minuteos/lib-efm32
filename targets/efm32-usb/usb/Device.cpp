@@ -463,10 +463,10 @@ void Device::HandleControlFeature(SetupPacket setup, bool set)
             case SetupPacket::RecipientDevice:
                 if (setup.wIndex != 0)
                     break;
-                
+
                 if (!(config && state == State::Configured))
                     return; // not supported right now
-                
+
                 if (setup.wValue == SetupPacket::FeatureDeviceRemoteWakeup)
                 {
                     if (!!(config->bmAttributes & ConfigAttributes::RemoteWakeup))
@@ -488,7 +488,7 @@ void Device::HandleControlFeature(SetupPacket setup, bool set)
                 if (num > (in ? USB_IN_ENDPOINTS : USB_OUT_ENDPOINTS))
                     return; // endpoint number out of range
 
-                if (setup.wValue == SetupPacket::FeatureEndpointHalt)  
+                if (setup.wValue == SetupPacket::FeatureEndpointHalt)
                 {
                     USBDIAG("%s(%d) STALL: %d", in ? "IN" : "OUT", num, set);
 

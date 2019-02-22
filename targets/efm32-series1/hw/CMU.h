@@ -4,7 +4,7 @@
  * for full license information.
  *
  * efm32-series1/hw/CMU.h
- * 
+ *
  * Convenience wrapper around the EFM32 Series 1 Clock Management Unit
  */
 
@@ -22,7 +22,7 @@
 class _CMU : public CMU_TypeDef
 {
 public:
-    //!< Initial clock configuration, should be called from startup code 
+    //!< Initial clock configuration, should be called from startup code
     void Configure();
 
     bool HFRCOEnabled() { return STATUS & CMU_STATUS_HFRCOENS; }
@@ -92,7 +92,7 @@ public:
     bool USBEnabled() { return HFBUSCLKEN0 & CMU_HFBUSCLKEN0_USB; }
     void EnableUSB()
     {
-        EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_USB); 
+        EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_USB);
 #if EFM32_HFXO_FREQUENCY == 48000000
         USBCTRL = CMU_USBCTRL_USBCLKEN | CMU_USBCTRL_USBCLKSEL_HFXO;
 #elif EFM32_HFXO_FREQUENCY == 24000000

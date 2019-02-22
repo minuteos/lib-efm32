@@ -7,7 +7,7 @@
  */
 
 
-#pragma once 
+#pragma once
 
 #include_next <base/platform.h>
 

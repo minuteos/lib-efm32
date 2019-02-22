@@ -4,13 +4,13 @@
  * for full license information.
  *
  * targets/slstk3401a/base/platform.h
- * 
+ *
  * Overrides for the EFM32 Pearl Gecko starter kit
  */
 
 #pragma once
 
-// the onboard debugger runs at 4.5 MHz and cannot hit 1MHz debug clock 
+// the onboard debugger runs at 4.5 MHz and cannot hit 1MHz debug clock
 #define SWV_BAUD_RATE   900000
 
 #define EFM32_LFXO_FREQUENCY    32768

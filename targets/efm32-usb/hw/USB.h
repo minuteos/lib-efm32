@@ -88,8 +88,8 @@ public:
     //! Activate the endpoint with the specified packet size and type
     void Activate(size_t maxPacketSize, unsigned type, unsigned fifo)
     {
-        CTL = (CTL & ~(USB_DIEP_CTL_COMMAND_MASK | _USB_DIEP_CTL_EPTYPE_MASK | _USB_DIEP_CTL_TXFNUM_MASK | _USB_DIEP_CTL_MPS_MASK)) | 
-            (maxPacketSize << _USB_DIEP_CTL_MPS_SHIFT) | 
+        CTL = (CTL & ~(USB_DIEP_CTL_COMMAND_MASK | _USB_DIEP_CTL_EPTYPE_MASK | _USB_DIEP_CTL_TXFNUM_MASK | _USB_DIEP_CTL_MPS_MASK)) |
+            (maxPacketSize << _USB_DIEP_CTL_MPS_SHIFT) |
             (type << _USB_DIEP_CTL_EPTYPE_SHIFT) |
             (fifo << _USB_DIEP_CTL_TXFNUM_SHIFT) |
             USB_DIEP_CTL_USBACTEP |

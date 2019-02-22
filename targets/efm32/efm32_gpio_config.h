@@ -4,7 +4,7 @@
  * for full license information.
  *
  * efm32_gpio_config.h
- * 
+ *
  * Placeholder to be overriden by the main project
  */
 

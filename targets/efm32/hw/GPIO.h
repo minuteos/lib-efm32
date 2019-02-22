@@ -164,7 +164,7 @@ public:
         Input = GPIO_P_MODEL_MODE0_INPUT,
         //! The pin is configured as a digital input with pull-up or pull-down (determined by output state)
         InputPull = GPIO_P_MODEL_MODE0_INPUTPULL,
-        //! The pin is configured as a digital output with 
+        //! The pin is configured as a digital output with
         PushPull = GPIO_P_MODEL_MODE0_PUSHPULL,
         //! The pin is configured with only high-side driver enabled when output is high; an external pull-down is expected
         WiredOr = GPIO_P_MODEL_MODE0_WIREDOR,

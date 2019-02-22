@@ -4,11 +4,11 @@
  * for full license information.
  *
  * efm32-rtcc/hw/RTCC.h
- * 
+ *
  * Convenience wrapper around the EFM32 RTCC peripheral
  */
 
-#pragma once 
+#pragma once
 
 #include <base/base.h>
 
@@ -20,65 +20,65 @@
 class _RTCC : public RTCC_TypeDef
 {
 public:
-	enum Flags
-	{
-		Enable = BIT(0),
-		Debug = BIT(2),
-		Prescale = 15 << 8,		// we allow only full prescaling to seconds, which is the only one that makes sense, since COMBCNT becomes a 32k counter while CNT is the number of seconds in this configuration
-		FailureDetection = BIT(15),
-	};
+    enum Flags
+    {
+        Enable = BIT(0),
+        Debug = BIT(2),
+        Prescale = 15 << 8,		// we allow only full prescaling to seconds, which is the only one that makes sense, since COMBCNT becomes a 32k counter while CNT is the number of seconds in this configuration
+        FailureDetection = BIT(15),
+    };
 
-	enum ChannelFlags
-	{
-		ChannelModeCapture = 1,
-		ChannelModeCompare = 2,
+    enum ChannelFlags
+    {
+        ChannelModeCapture = 1,
+        ChannelModeCompare = 2,
 
-		ChannelOutputPulse = 0 << 2,
-		ChannelOutputToggle = 1 << 2,
-		ChannelOutputClear = 2 << 2,
-		ChannelOutputSet = 3 << 2,
+        ChannelOutputPulse = 0 << 2,
+        ChannelOutputToggle = 1 << 2,
+        ChannelOutputClear = 2 << 2,
+        ChannelOutputSet = 3 << 2,
 
-		ChannelInputRising = 0 << 4,
-		ChannelInputFalling = 1 << 4,
-		ChannelInputBoth = 2 << 4,
-		ChannelInputNone = 3 << 4,
+        ChannelInputRising = 0 << 4,
+        ChannelInputFalling = 1 << 4,
+        ChannelInputBoth = 2 << 4,
+        ChannelInputNone = 3 << 4,
 
-		ChannelPRSOffset = 6,
+        ChannelPRSOffset = 6,
 
-		ChannelCompareCounter = 0,
-		ChannelComparePrescaler = BIT(11),
+        ChannelCompareCounter = 0,
+        ChannelComparePrescaler = BIT(11),
 
-		ChannelCompareMaskOffset = 12,
-	};
+        ChannelCompareMaskOffset = 12,
+    };
 
-	enum
-	{
-		WakeChannel = 2,
-	};
+    enum
+    {
+        WakeChannel = 2,
+    };
 
-	void Configure();
+    void Configure();
 
-	//! Gets the overflowing tick counter
-	uint32_t Ticks() { return COMBCNT; }
+    //! Gets the overflowing tick counter
+    uint32_t Ticks() { return COMBCNT; }
 
-	//! Gets the real time, if set previously
-	uint32_t Time() { return CNT + TimeOffset(); }
-	//! Sets the real time
-	void SetTime(uint32_t time) { TimeOffset() = time - CNT; }
+    //! Gets the real time, if set previously
+    uint32_t Time() { return CNT + TimeOffset(); }
+    //! Sets the real time
+    void SetTime(uint32_t time) { TimeOffset() = time - CNT; }
 
-	void SetupWake(uint32_t at);
-	void DisableWake() { EFM32_BITCLR(IEN, BIT(1 + WakeChannel)); IRQClear(); }
+    void SetupWake(uint32_t at);
+    void DisableWake() { EFM32_BITCLR(IEN, BIT(1 + WakeChannel)); IRQClear(); }
 
 private:
-	// RTC must not be configured by application
-	void Setup(Flags flags) { CTRL = flags; }
+    // RTC must not be configured by application
+    void Setup(Flags flags) { CTRL = flags; }
 
-	void IRQEnable() { NVIC_EnableIRQ(RTCC_IRQn); }
-	void IRQDisable() { NVIC_DisableIRQ(RTCC_IRQn); }
-	void IRQClear() { NVIC_ClearPendingIRQ(RTCC_IRQn); }
-	void IRQHandler();
+    void IRQEnable() { NVIC_EnableIRQ(RTCC_IRQn); }
+    void IRQDisable() { NVIC_DisableIRQ(RTCC_IRQn); }
+    void IRQClear() { NVIC_ClearPendingIRQ(RTCC_IRQn); }
+    void IRQHandler();
 
-	volatile uint32_t& TimeOffset() { return RET[0].REG; }
+    volatile uint32_t& TimeOffset() { return RET[0].REG; }
 };
 
 DEFINE_FLAG_ENUM(_RTCC::Flags);

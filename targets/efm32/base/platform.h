@@ -6,7 +6,7 @@
  * targets/efm32/base/platform.h
  */
 
-#pragma once 
+#pragma once
 
 #define CORTEX_STARTUP_HARDWARE_INIT	_efm32_startup
 

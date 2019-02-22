@@ -4,7 +4,7 @@
  * for full license information.
  *
  * efm32-usb/usb/Packets.h
- * 
+ *
  * Standard USB packets
  */
 

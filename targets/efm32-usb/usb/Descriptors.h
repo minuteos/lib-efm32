@@ -4,7 +4,7 @@
  * for full license information.
  *
  * efm32-usb/usb/Descriptors.h
- * 
+ *
  * Standard USB descriptors
  */
 
@@ -289,7 +289,7 @@ template<typename... TInterfaces> constexpr ConfigDescriptorBlock<TInterfaces...
 
 //! Interface definition header, immediately followed by endpoint descriptors
 PACKED_UNALIGNED_STRUCT InterfaceDescriptorHeader : DescriptorHeader
-{  
+{
     constexpr InterfaceDescriptorHeader(uint8_t index, uint8_t alternate, uint8_t numEndpoints, InterfaceClass cls, SubClass subCls, Protocol proto, uint8_t strName = 0)
         : DescriptorHeader(sizeof(InterfaceDescriptorHeader), DescriptorType::Interface),
         bInterfaceNumber(index),
@@ -426,7 +426,7 @@ PACKED_UNALIGNED_STRUCT StringDescriptor
         // moves to the next descriptor
         // skips an additional two bytes, since the strings are actually null-terminated
         // also word-aligns up, as each string descriptor starts at a word boundary
-        return (const StringDescriptor*)(((uintptr_t)this + len + 2 + 3) & ~3); 
+        return (const StringDescriptor*)(((uintptr_t)this + len + 2 + 3) & ~3);
     }
 };
 

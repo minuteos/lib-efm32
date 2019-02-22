@@ -6,7 +6,7 @@
  * emlib.c
  *
  * Makes the entire SiLabs emlib available
- * 
+ *
  * Unused symbols will be discarded by the linker
  */
 
