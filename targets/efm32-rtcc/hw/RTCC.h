@@ -67,16 +67,11 @@ public:
     void SetTime(uint32_t time) { TimeOffset() = time - CNT; }
 
     void SetupWake(uint32_t at);
-    void DisableWake() { EFM32_BITCLR(IEN, BIT(1 + WakeChannel)); IRQClear(); }
+    void DisableWake() { EFM32_BITCLR(IEN, BIT(1 + WakeChannel)); }
 
 private:
     // RTC must not be configured by application
     void Setup(Flags flags) { CTRL = flags; }
-
-    void IRQEnable() { NVIC_EnableIRQ(RTCC_IRQn); }
-    void IRQDisable() { NVIC_DisableIRQ(RTCC_IRQn); }
-    void IRQClear() { NVIC_ClearPendingIRQ(RTCC_IRQn); }
-    void IRQHandler();
 
     volatile uint32_t& TimeOffset() { return RET[0].REG; }
 };

@@ -15,8 +15,8 @@ void _RTCC::Configure()
 
     Setup(Enable | Prescale);
 
-    Cortex_SetIRQHandler(RTCC_IRQn, GetDelegate(this, &_RTCC::IRQHandler));
-    IRQEnable();
+    Cortex_SetIRQWakeup(RTCC_IRQn);
+    NVIC_EnableIRQ(RTCC_IRQn);
 
     if (init)
     {
@@ -35,10 +35,4 @@ void _RTCC::SetupWake(mono_t atTicks)
     CC[WakeChannel].CCV = atTicks;
     CC[WakeChannel].CTRL = ChannelModeCompare | ChannelComparePrescaler;
     EFM32_BITSET(IEN, BIT(1 + WakeChannel));
-}
-
-void _RTCC::IRQHandler()
-{
-    // disable all triggered interrupts
-    EFM32_BITCLR(IEN, IFC);
 }
