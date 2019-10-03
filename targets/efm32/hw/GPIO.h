@@ -414,7 +414,7 @@ ALWAYS_INLINE constexpr GPIOPinID GPIOPin::GetID() const { return ((GPIOPort::Ge
 ALWAYS_INLINE void GPIOPin::Configure(Mode mode) const { port->Configure(mask, mode); }
 ALWAYS_INLINE void GPIOPin::ConfigureAlternate(Mode mode, volatile uint32_t& routepen, uint8_t route, uint8_t locIndex, GPIOLocations_t locations) const { port->ConfigureAlternate(GPIOPort::AltSpec(Index(), mode, route, locIndex), routepen, locations); }
 #ifdef EFM32_GPIO_LINEAR_INDEX
-ALWAYS_INLINE constexpr unsigned GPIOPin::GetLinearIndex(unsigned offset) const { return (Index() + offset + EFM32_GPIO_LINEAR_INDEX[GPIOPort::GetIndex(port)]) & 31; }
+ALWAYS_INLINE constexpr unsigned GPIOPin::GetLinearIndex(unsigned offset) const { return (Index() - offset + EFM32_GPIO_LINEAR_INDEX[GPIOPort::GetIndex(port)]) & 31; }
 ALWAYS_INLINE void GPIOPin::ConfigureAlternate(Mode mode, volatile uint32_t& routepen, uint8_t route, uint8_t locIndex, unsigned locOffset) const { port->ConfigureAlternate(GPIOPort::AltSpec(Index(), mode, route, locIndex), routepen, locOffset); }
 #endif
 

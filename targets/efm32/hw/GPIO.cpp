@@ -123,3 +123,25 @@ filter_set:
             MODMASK(MODEL, MASK(4) << shift, modeNum << shift);
     } while(mask);
 }
+
+#ifdef EFM32_GPIO_LINEAR_INDEX
+
+void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, unsigned locOffset)
+{
+    if (spec.pin > 15)
+        return;
+
+    unsigned n = (spec.pin - locOffset + EFM32_GPIO_LINEAR_INDEX[GetIndex(this)]) & 31;
+
+    CMU->EnableGPIO();
+
+    DBG("gpio: Routing port %c%d to peripheral %08X route %d location %d\n", 'A' + Index(), spec.pin, ((uint)&routepen) & ~(MASK(10)), spec.loc, n);
+
+    volatile uint32_t* ploc = &routepen + 1 + (spec.loc >> 2);
+    unsigned loc = (spec.loc & 3) << 3;
+    MODMASK(*ploc, MASK(6) << loc, n << loc);
+    SETBIT(routepen, spec.route);
+    return Configure(BIT(spec.pin), spec.mode);
+}
+
+#endif
