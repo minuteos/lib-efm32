@@ -73,6 +73,14 @@ public:
     unsigned DeepSleepRestoreMicroseconds() { return 16; } // datasheet specifications for various models are around 12 us
 #endif
 
+#if EFM32_HFXO_FREQUENCY
+    static constexpr unsigned GetCoreFrequency() { return EFM32_HFXO_FREQUENCY; }
+#elif EFM32_HFRCO_FREQUENCY
+    static constexpr unsigned GetCoreFrequency() { return EFM32_HFRCO_FREQUENCY; }
+#else
+    static constexpr unsigned GetCoreFrequency() { return 19000000; }
+#endif
+
     void EnableLE()
     {
         EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_LE);
