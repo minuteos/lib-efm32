@@ -24,9 +24,9 @@ void _CMU::Configure()
     EnableLFXO();
 #endif
 #if EFM32_HFXO_FREQUENCY
+    EnableHFXO();
     // autostart HFXO whenever MCU is running
     EFM32_BITSET(HFXOCTRL, CMU_HFXOCTRL_AUTOSTARTEM0EM1);
-    EnableHFXO();
 #endif
 
 #if (EFM32_LFXO_FREQUENCY && !EFM32_WAIT_FOR_LFXO) || \
