@@ -11,6 +11,7 @@
 #include <em_chip.h>
 
 #include <hw/CMU.h>
+#include <hw/EMU.h>
 #include <hw/GPIO.h>
 
 void _efm32_startup()
@@ -58,6 +59,7 @@ void _efm32_startup()
     ITM->TER = ~0u;		// enable all channels
 #endif
 
+    EMU->Configure();
     CMU->Configure();
 
 #ifdef EFM32_RTC

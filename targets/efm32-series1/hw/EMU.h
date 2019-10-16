@@ -20,6 +20,8 @@
 class _EMU : public EMU_TypeDef
 {
 public:
+    void Configure();
+
 #ifdef _EMU_R5VOUTLEVEL_OUTLEVEL_MASK
     int R5VOutputLevel() { return 23 + ((R5VOUTLEVEL & _EMU_R5VOUTLEVEL_OUTLEVEL_MASK) >> _EMU_R5VOUTLEVEL_OUTLEVEL_SHIFT); }
     void R5VOutputLevel(int mv100) { MODMASK_SAFE(R5VOUTLEVEL, _EMU_R5VOUTLEVEL_OUTLEVEL_MASK, (mv100 - 23) << _EMU_R5VOUTLEVEL_OUTLEVEL_SHIFT); }

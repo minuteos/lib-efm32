@@ -8,7 +8,17 @@
 
 #include <hw/EMU.h>
 
+#include <em_emu.h>
+
 #define MYDBG(...)  DBGCL("EMU", __VA_ARGS__)
+
+void _EMU::Configure()
+{
+#if EFM32_USE_DCDC
+    static const EMU_DCDCInit_TypeDef dcdcInit = EMU_DCDCINIT_DEFAULT;
+    EMU_DCDCInit(&dcdcInit);
+#endif
+}
 
 #if defined(Ckernel) && defined(_EMU_R5VOUTLEVEL_OUTLEVEL_MASK)
 
