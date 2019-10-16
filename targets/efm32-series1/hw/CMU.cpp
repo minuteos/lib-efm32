@@ -21,12 +21,16 @@ void _CMU::Configure()
     MYDIAG("Init STATUS: %08X", STATUS);
 
 #if EFM32_LFXO_FREQUENCY
-    EnableLFXO();
+    CMU_OscillatorEnable(cmuOsc_LFXO, true, false);
 #endif
 #if EFM32_HFXO_FREQUENCY
-    EnableHFXO();
+    CMU_HFXOInit_TypeDef hfxoInit = CMU_HFXOINIT_DEFAULT;
+    hfxoInit.ctuneSteadyState = 282;
+    HFXOCTRL &= ~CMU_HFXOCTRL_AUTOSTARTEM0EM1;
+    CMU_HFXOInit(&hfxoInit);
+    CMU_OscillatorEnable(cmuOsc_HFXO, true, EFM32_WAIT_FOR_HFXO);
     // autostart HFXO whenever MCU is running
-    EFM32_BITSET(HFXOCTRL, CMU_HFXOCTRL_AUTOSTARTEM0EM1);
+    HFXOCTRL |= CMU_HFXOCTRL_AUTOSTARTEM0EM1;
 #endif
 
 #if (EFM32_LFXO_FREQUENCY && !EFM32_WAIT_FOR_LFXO) || \
@@ -39,8 +43,7 @@ void _CMU::Configure()
     // first configure the low frequency oscillator
 #if !EFM32_LFXO_FREQUENCY
     // crystal not available, use the LFRCO which starts up quickly so we can wait for it
-    EnableLFRCO();
-    while (!LFRCOReady());
+    CMU_OscillatorEnable(cmuOsc_LFRCO, true, true);
     LFACLKSEL = CMU_LFACLKSEL_LFA_LFRCO;
     LFBCLKSEL = CMU_LFBCLKSEL_LFB_LFRCO;
 #ifdef CMU_LFCCLKSEL_LFC_LFRCO
@@ -70,8 +73,7 @@ void _CMU::Configure()
 #if !EFM32_WAIT_FOR_LFXO
     else
     {
-        EnableLFRCO();
-        while (!LFRCOReady());
+        CMU_OscillatorEnable(cmuOsc_LFRCO, true, true);
         LFACLKSEL = CMU_LFACLKSEL_LFA_LFRCO;
         LFBCLKSEL = CMU_LFBCLKSEL_LFB_LFRCO;
 #ifdef CMU_LFCCLKSEL_LFC_LFRCO
@@ -97,40 +99,14 @@ void _CMU::Configure()
 #elif defined(EFM32_USHFRCO_HFCLK)
     EnableUSHFRCO();
     USHFRCOCTRL = DEVINFO->USHFRCOCAL13;
-    CMU_UpdateWaitStates(48000000, 0);
     while (!USHFRCOReady());
+    CMU_UpdateWaitStates(48000000, 0);
     HFCLKSEL = CMU_HFCLKSEL_HF_USHFRCO;
 #elif defined(EFM32_HFRCO_FREQUENCY)
-    EnableHFRCO();
-#if EFM32_HFRCO_FREQUENCY == 4000000 && defined(_DEVINFO_HFRCOCAL0_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL0;
-#elif EFM32_HFRCO_FREQUENCY == 7000000 && defined(_DEVINFO_HFRCOCAL3_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL3;
-#elif EFM32_HFRCO_FREQUENCY == 13000000 && defined(_DEVINFO_HFRCOCAL6_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL6;
-#elif EFM32_HFRCO_FREQUENCY == 16000000 && defined(_DEVINFO_HFRCOCAL7_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL7;
-#elif EFM32_HFRCO_FREQUENCY == 19000000 && defined(_DEVINFO_HFRCOCAL8_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL8;
-#elif EFM32_HFRCO_FREQUENCY == 26000000 && defined(_DEVINFO_HFRCOCAL10_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL10;
-#elif EFM32_HFRCO_FREQUENCY == 32000000 && defined(_DEVINFO_HFRCOCAL11_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL11;
-#elif EFM32_HFRCO_FREQUENCY == 38000000 && defined(_DEVINFO_HFRCOCAL12_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL12;
-#elif EFM32_HFRCO_FREQUENCY == 48000000 && defined(_DEVINFO_HFRCOCAL13_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL13;
-#elif EFM32_HFRCO_FREQUENCY == 56000000 && defined(_DEVINFO_HFRCOCAL14_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL14;
-#elif EFM32_HFRCO_FREQUENCY == 64000000 && defined(_DEVINFO_HFRCOCAL15_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL15;
-#elif EFM32_HFRCO_FREQUENCY == 72000000 && defined(_DEVINFO_HFRCOCAL16_MASK)
-    HFRCOCTRL = DEVINFO->HFRCOCAL16;
-#else
-#error "Unsupported HFRCO Frequency"
-#endif
-    CMU_UpdateWaitStates(EFM32_HFRCO_FREQUENCY, 0);
+    CMU_OscillatorEnable(cmuOsc_HFRCO);
+    CMU_HFRCOBandSet(EFM32_HFRCO_FREQUENCY);
     while (!HFRCOReady());
+    CMU_UpdateWaitStates(EFM32_HFRCO_FREQUENCY, 0);
     HFCLKSEL = CMU_HFCLKSEL_HF_HFRCO;
 #endif
 }
