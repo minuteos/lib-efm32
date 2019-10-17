@@ -8,7 +8,7 @@
 
 EFM32_SDK_ORIGIN_BOOT = $(EFM32_SDK_ORIGIN)platform/bootloader/
 
-EFM32_SDK_BOOT = $(OUTDIR)efm32-boot/
+EFM32_SDK_BOOT = $(OBJDIR)efm32-boot/
 
 EFM32_BOOT_INCLUDE = $(EFM32_SDK_BOOT)api/
 
@@ -18,5 +18,7 @@ INCLUDE_DIRS += $(EFM32_BOOT_INCLUDE)
 
 prebuild: efm32_boot
 
-efm32_boot: efm32_sdk
+efm32_boot: efm32_sdk $(EFM32_SDK_BOOT)
+
+$(EFM32_SDK_BOOT): $(OBJDIR)
 	@$(LN) -snf $(EFM32_SDK_ORIGIN_BOOT) $(EFM32_SDK_BOOT:/=)
