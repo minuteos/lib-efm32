@@ -49,6 +49,8 @@ endif
 
 .PHONY: efm32_sdk
 
+all: srec
+
 prebuild: efm32_sdk
 
 $(EFM32_SYSTEM_SOURCE_PATH): efm32_sdk
