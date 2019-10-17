@@ -19,4 +19,4 @@ INCLUDE_DIRS += $(EFM32_BOOT_INCLUDE)
 prebuild: efm32_boot
 
 efm32_boot: efm32_sdk
-	@$(LN) -shf $(EFM32_SDK_ORIGIN_BOOT) $(EFM32_SDK_BOOT:/=)
+	@$(LN) -snf $(EFM32_SDK_ORIGIN_BOOT) $(EFM32_SDK_BOOT:/=)

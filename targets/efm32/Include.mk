@@ -52,6 +52,6 @@ prebuild: efm32_sdk
 efm32_sdk:
 	$(info Using EFM32 SDK in $(EFM32_SDK_ORIGIN), device $(EFM32_DEVICE), part header $(EFM32_PART_HEADER))
 	@$(MKDIR) -p $(OUTDIR)
-	@$(LN) -shf $(EFM32_SDK_ORIGIN_DEVICE) $(EFM32_SDK_DEVICE:/=)
-	@$(LN) -shf $(EFM32_SDK_ORIGIN_CMSIS) $(EFM32_SDK_CMSIS:/=)
-	@$(LN) -shf $(EFM32_SDK_ORIGIN_EMLIB) $(EFM32_SDK_EMLIB:/=)
+	@$(LN) -snf $(EFM32_SDK_ORIGIN_DEVICE) $(EFM32_SDK_DEVICE:/=)
+	@$(LN) -snf $(EFM32_SDK_ORIGIN_CMSIS) $(EFM32_SDK_CMSIS:/=)
+	@$(LN) -snf $(EFM32_SDK_ORIGIN_EMLIB) $(EFM32_SDK_EMLIB:/=)
