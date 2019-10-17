@@ -6,14 +6,14 @@
 # efm32/Include.mk - Makefile additions for SiLabs EFM32 MCUs
 #
 
-EFM32_DEV_ROOT = /Applications/Simplicity\ Studio.app/Contents/Eclipse/developer/
-EFM32_SDKS = $(EFM32_DEV_ROOT)sdks/gecko_sdk_suite/
+EFM32_DEV_ROOT ?= /Applications/Simplicity\ Studio.app/Contents/Eclipse/developer/
+EFM32_SDKS ?= $(EFM32_DEV_ROOT)sdks/gecko_sdk_suite/
 
 # find the latest available version of the SDK
 EFM32_SDK_VERSION ?= $(lastword $(sort $(filter-out Simplicity,$(notdir $(wildcard $(EFM32_SDKS)/*)))))
 
 # we need to link the SDK into our build directory, as it typically contains spaces which Makefile cannot handle at all
-EFM32_SDK_ORIGIN = $(EFM32_SDKS)$(EFM32_SDK_VERSION)/
+EFM32_SDK_ORIGIN ?= $(EFM32_SDKS)$(EFM32_SDK_VERSION)/
 EFM32_DEVICE ?= $(filter $(TARGETS),EFM32%g%)
 EFM32_SDK_ORIGIN_DEVICE = $(EFM32_SDK_ORIGIN)platform/Device/SiliconLabs/$(EFM32_DEVICE)/
 EFM32_SDK_ORIGIN_CMSIS = $(EFM32_SDK_ORIGIN)platform/CMSIS/
