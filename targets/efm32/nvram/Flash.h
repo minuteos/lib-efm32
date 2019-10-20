@@ -11,6 +11,8 @@
 #include <base/base.h>
 #include <base/Span.h>
 
+#include <kernel/kernel.h>
+
 #include <hw/DEVINFO.h>
 #include <hw/MSC.h>
 
@@ -28,6 +30,7 @@ public:
     static bool WriteWord(const void* ptr, uint32_t word) { return MSC->WriteWord(ptr, word); }
     static void ShredWord(const void* ptr) { while (!MSC->WriteWord(ptr, 0)); }
     static bool Erase(Span range) { return MSC->Erase(range.Pointer(), range.Length()); }
+    static async(ErasePageAsync, const void* ptr) { return async_forward(MSC->ErasePage, ptr); }
 };
 
 }

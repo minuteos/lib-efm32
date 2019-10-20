@@ -11,6 +11,8 @@
 #include <base/base.h>
 #include <base/Span.h>
 
+#include <kernel/kernel.h>
+
 #undef MSC
 #define MSC    CM_PERIPHERAL(_MSC, MSC_BASE)
 
@@ -20,6 +22,8 @@ public:
     bool WriteWord(const volatile void* ptr, uint32_t value);
     bool Write(const volatile void* ptr, Span data);
     bool Erase(const volatile void* ptr, uint32_t length);
+    bool TryErasePage(const volatile void* ptr);
+    async(ErasePage, const volatile void* ptr);
 
 private:
     static constexpr uint32_t PageSize = FLASH_PAGE_SIZE;
@@ -31,4 +35,8 @@ private:
     void UnlockFlash() { Unlock(); WRITECTRL = MSC_WRITECTRL_WREN; }
     void Lock() { LOCK = 0; }
     void LockFlash() { WRITECTRL = 0; Lock(); }
+
+    bool IsErased(const volatile void* page);
+
+    void TryErasePageHelper();
 };
