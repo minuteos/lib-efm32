@@ -67,7 +67,12 @@ public:
     void SetTime(uint32_t time) { TimeOffset() = time - CNT; }
 
     void SetupWake(uint32_t at);
-    void DisableWake() { EFM32_BITCLR(IEN, BIT(1 + WakeChannel)); }
+    void DisableWake() { InterruptDisable(WakeChannel); }
+
+    void InterruptEnable(unsigned channel) { IEN |= RTCC_IEN_CC0 << channel; }
+    void InterruptDisable(unsigned channel) { IEN &= ~(RTCC_IEN_CC0 << channel); }
+    void InterruptClear(unsigned channel) { IFC = RTCC_IEN_CC0 << channel; }
+    bool InterruptActive(unsigned channel) { return IF & (RTCC_IEN_CC0 << channel); }
 
 private:
     // RTC must not be configured by application

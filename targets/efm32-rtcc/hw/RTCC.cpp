@@ -7,6 +7,7 @@
  */
 
 #include <hw/RTCC.h>
+#include <hw/SCB.h>
 
 void _RTCC::Configure()
 {
@@ -16,7 +17,6 @@ void _RTCC::Configure()
     Setup(Enable | Prescale);
 
     Cortex_SetIRQWakeup(RTCC_IRQn);
-    NVIC_EnableIRQ(RTCC_IRQn);
 
     if (init)
     {
@@ -29,10 +29,16 @@ void _RTCC::Configure()
 
 void _RTCC::SetupWake(mono_t atTicks)
 {
-    EFM32_BITCLR(IEN, BIT(1 + WakeChannel));
     CC[WakeChannel].CTRL = 0;
-    IFC = BIT(1 + WakeChannel);
+    InterruptDisable(WakeChannel);
+    InterruptClear(WakeChannel);
+    SCB->EnableWake(RTCC_IRQn); // also clears any pending request
     CC[WakeChannel].CCV = atTicks;
     CC[WakeChannel].CTRL = ChannelModeCompare | ChannelComparePrescaler;
-    EFM32_BITSET(IEN, BIT(1 + WakeChannel));
+    InterruptEnable(WakeChannel);
+    // we might have already crossed the wake moment
+    if (OVF_GE(COMBCNT, atTicks))
+    {
+        SCB->TriggerWake(RTCC_IRQn);
+    }
 }
