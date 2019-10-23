@@ -57,10 +57,11 @@ void _CMU::Configure()
     {
         MYDIAG("Waiting for LFXO...");
         while (!LFXOReady());
-#else
+    }
+#endif
+
     if (LFXOReady())
     {
-#endif
         // LFXO is running
         MYDIAG("LFXO running...");
         LFACLKSEL = CMU_LFACLKSEL_LFA_LFXO;
