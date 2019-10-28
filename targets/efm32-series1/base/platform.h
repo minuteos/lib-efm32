@@ -15,8 +15,12 @@
 #define CORTEX_STARTUP_FREQUENCY	19000000
 #endif
 
+#if !BOOTLOADER
+
 #ifndef CORTEX_DEEP_SLEEP_ENABLED
 #define CORTEX_DEEP_SLEEP_ENABLED   1   // enabled by default
+#endif
+
 #endif
 
 #define CORTEX_DEEP_SLEEP_PREPARE       CMU->DeepSleepPrepare
