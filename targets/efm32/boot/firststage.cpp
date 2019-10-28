@@ -3,12 +3,15 @@
  * Licensed under the MIT license. See LICENSE.txt file in the repository root
  * for full license information.
  *
- * efm32-series1/boot/firststage.cpp
+ * efm32/boot/firststage.cpp
  *
- * First stage bootloader for EFx32xG1x series MCUs
+ * First stage bootloader for EFM32 series MCUs
+ * (stub implementation, simply jumps to the main bootloader)
  */
 
 #include <base/base.h>
+
+#include <btl_interface.h>
 
 BEGIN_EXTERN_C
 
@@ -21,5 +24,14 @@ void FirstStage()
     SCB->VTOR = (uint32_t)&__boot_start;
     __asm volatile("ldr sp, [%0]\nldr pc, [%0, #4]" : : "r"(&__boot_start));
 }
+
+BareBootTable_t __boot_start;
+
+__attribute__((used, section(".firststage.table")))
+const FirstBootloaderTable_t _boot_table_first = {
+    { BOOTLOADER_MAGIC_FIRST_STAGE, 0, 0 },
+    &__boot_start,
+    NULL,
+};
 
 END_EXTERN_C
