@@ -15,12 +15,7 @@
 
 #include <em_gpio.h>        // let EMLIB detect the actual port configuration
 
-#if (_GPIO_PORT_A_PIN_MASK == 0x003F) && \
-    (_GPIO_PORT_B_PIN_MASK == 0xF800) && \
-    (_GPIO_PORT_C_PIN_MASK == 0x0FC0) && \
-    (_GPIO_PORT_D_PIN_MASK == 0xFE00) && \
-    (_GPIO_PORT_E_PIN_MASK == 0x0000) && \
-    (_GPIO_PORT_F_PIN_MASK == 0x00FF)
+#if defined(_SILICON_LABS_32B_SERIES_1) && !defined(_EFM32_GIANT_FAMILY)
 
 // GPIO configuration of EFM32J/PG1 and EFR32 Series 1 MCUs
 // the table contains offsets that linearize the pins so that PA0-PA5 = 0-5, PB11-PB15 = 6-11, ...
