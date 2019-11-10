@@ -139,6 +139,11 @@ public:
     }
 #endif
 
+#ifdef CMU_HFBUSCLKEN0_PRS
+    bool PRSEnabled() { return HFBUSCLKEN0 & CMU_HFBUSCLKEN0_PRS; }
+    void EnablePRS() { EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_PRS); }
+#endif
+
 private:
     void IRQHandler();
 };
