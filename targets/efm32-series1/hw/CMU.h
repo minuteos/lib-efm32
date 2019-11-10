@@ -117,7 +117,7 @@ public:
 #endif
 
 #ifdef CMU_HFPERCLKEN0_I2C0
-    bool I2CEnabled(unsigned index) { ASSERT(index < I2C_COUNT); return HFBUSCLKEN0 & (CMU_HFPERCLKEN0_I2C0 << index); }
+    bool I2CEnabled(unsigned index) { ASSERT(index < I2C_COUNT); return HFPERCLKEN0 & (CMU_HFPERCLKEN0_I2C0 << index); }
     void EnableI2C(unsigned index) { ASSERT(index < I2C_COUNT); EFM32_BITSET(HFPERCLKEN0, CMU_HFPERCLKEN0_I2C0 << index); }
 #endif
 
