@@ -40,3 +40,21 @@ void ADC::ScanSetup(ModeFlags flags, const APORT* ports, size_t count)
     SCANINPUTSEL = sel;
     SCANMASK = mask;
 }
+
+async(ADC::_MeasureSingle, uint32_t singleCtrl)
+async_def()
+{
+    ASSERT(!Active());
+
+    SINGLECTRL = singleCtrl;
+    SingleStart();
+
+    IEN = ADC_IEN_SINGLE;
+    Cortex_SetIRQWakeup(ADC0_IRQn);
+    NVIC_ClearPendingIRQ(ADC0_IRQn);
+    NVIC_EnableIRQ(ADC0_IRQn);
+    await_mask(IF, ADC_IF_SINGLE, ADC_IF_SINGLE);
+    NVIC_DisableIRQ(ADC0_IRQn);
+    async_return(SingleRead());
+}
+async_end

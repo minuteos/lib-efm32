@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <base/base.h>
+#include <kernel/kernel.h>
 
 #include <hw/CMU.h>
 #include <hw/PRS.h>
@@ -106,6 +106,7 @@ public:
 
     bool SingleActive() const { return STATUS & ADC_STATUS_SINGLEACT; }
     bool ScanActive() const { return STATUS & ADC_STATUS_SCANACT; }
+    bool Active() const { return STATUS & (ADC_STATUS_SINGLEACT | ADC_STATUS_SCANACT); }
 
     bool SingleReferenceWarmedUp() const { return STATUS & ADC_STATUS_SINGLEREFWARM; }
     bool ScanReferenceWarmedUp() const { return STATUS & ADC_STATUS_SCANREFWARM; }
@@ -144,6 +145,13 @@ public:
 
     volatile const void* SinglePtr() { return &SINGLEDATA; }
     volatile const void* ScanPtr() { return &SCANDATA; }
+
+    async(MeasureSingle, ModeFlags flags, APORTX pos, APORTY neg = APORTY::VSS) { return async_forward(_MeasureSingle, flags | pos << 8 | neg << 16); }
+
+    constexpr static float Multiplier(float range) { return range / 65535; }
+
+private:
+    async(_MeasureSingle, uint32_t singleCtrl);
 };
 
 DEFINE_FLAG_ENUM(ADC::Flags);
