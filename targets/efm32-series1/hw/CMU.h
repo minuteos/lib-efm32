@@ -121,6 +121,12 @@ public:
     void EnableI2C(unsigned index) { ASSERT(index < I2C_COUNT); EFM32_BITSET(HFPERCLKEN0, CMU_HFPERCLKEN0_I2C0 << index); }
 #endif
 
+#ifdef CMU_HFPERCLKEN0_ADC0
+    bool ADCEnabled(unsigned index) { ASSERT(index < ADC_COUNT); return HFPERCLKEN0 & (CMU_HFPERCLKEN0_ADC0 << index); }
+    void EnableADC(unsigned index) { ASSERT(index < ADC_COUNT); EFM32_BITSET(HFPERCLKEN0, CMU_HFPERCLKEN0_ADC0 << index); }
+    void DisableADC(unsigned index) { ASSERT(index < ADC_COUNT); EFM32_BITCLR(HFPERCLKEN0, CMU_HFPERCLKEN0_ADC0 << index); }
+#endif
+
 #ifdef CMU_HFBUSCLKEN0_USB
     bool USBEnabled() { return HFBUSCLKEN0 & CMU_HFBUSCLKEN0_USB; }
     void EnableUSB()
