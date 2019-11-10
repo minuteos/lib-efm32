@@ -30,6 +30,8 @@
     24 - 0, /* PF0  (24) - PF7  (31) */ \
 })
 
+#define EFM32_GPIO_APORT_AVAILABLE  1
+
 #endif
 
 #ifdef _GPIO_P_CTRL_SLEWRATE_MASK
@@ -81,6 +83,57 @@
 
 class GPIOBlock;
 class GPIOPort;
+class GPIOPinID;
+
+class APORT
+{
+    union
+    {
+        uint8_t value;
+        struct
+        {
+            uint8_t scanBit : 3;
+            uint8_t scanInput : 5;
+        };
+    };
+
+protected:
+    constexpr APORT(uint8_t value) : value(value) {}
+
+    static unsigned BusMask(unsigned value)
+    {
+        unsigned num = value >> 5;      // number of port, i.e. 0-4
+        bool y = (value & 1) == (num & 1);	// odd ports have X channel first, even ports have Y channel first
+        return 1 << (num << 1) << y;	// BUS<num>[XY]
+    }
+
+public:
+    //! APORT fixed internal connections
+    enum Fixed
+    {
+        AVDD = 224,
+        DVDD = 226,
+        IOVDD = 229,
+        DACOUT0 = 242,
+        DACOUT1 = 243,
+        VLP = 251,
+        VBDIV = 252,
+        VADIV = 253,
+        VDD = 254,
+        VSS = 255,
+    };
+
+    constexpr operator uint8_t() const { return value; }
+
+    //! Gets the SCANINPUTSEL value for this port
+    uint32_t ScanInputSel() const { return scanInput; }
+    //! Gets the SCANMASK value for this port
+    uint32_t ScanMask() const { return BIT(scanBit); }
+    //! Gets the bus mask (e.g. APORTREQ, APORTMASTERDIS) value for this port
+    uint32_t BusMask() const { return BusMask(value); }
+
+    friend class GPIOPinID;
+};
 
 //! Compact identification of a GPIO pin
 class GPIOPinID
@@ -111,6 +164,30 @@ public:
 
     //! Checks if this is a valid GPIO pin
     constexpr operator bool() const { return IsValid(); }
+
+#if EFM32_GPIO_APORT_AVAILABLE
+    //! Gets the APORTX channel for this pin
+    ALWAYS_INLINE constexpr APORT APORTX() const { return index + APORTOffset() + (index & 1) * 32; }
+    //! Gets the APORTY channel for this pin
+    ALWAYS_INLINE constexpr APORT APORTY() const { return index + APORTOffset() + !(index & 1) * 32; }
+#endif
+
+private:
+#ifdef EFM32_GPIO_LINEAR_INDEX
+    //! APORT mapping for EFM32 Series 1 PINs
+    ALWAYS_INLINE constexpr int APORTOffset() const
+    {
+        switch (port)
+        {
+            case 1: return 96 + 8;  // PORT A = APORT3/4 CH8-13 for PA0-PA5 (+8)
+            case 2: return 96 + 16; // PORT B = APORT3/4 CH27-31 for PB11-15 (+16)
+            case 3: return 32 + 0;  // PORT C = APORT1/2 CH6-11 for PC6-11 (+0)
+            case 4: return 96 - 8;  // PORT D = APORT3/4 CH1-7 for PD9-15 (-8)
+            case 5: return 32 + 16; // PORT F = APORT1/2 CH16-23 for PF0-7 (+16)
+        }
+        return 0;
+    }
+#endif
 };
 
 //! Location lookup table type
@@ -418,3 +495,21 @@ ALWAYS_INLINE void GPIOPin::Res() const { port->DOUT &= ~mask; }
 ALWAYS_INLINE void GPIOPin::Toggle() const { port->DOUTTGL = mask; }
 ALWAYS_INLINE void GPIOPin::Set(bool state) const { port->DOUT = state ? port->DOUT | mask : port->DOUT & ~mask; }
 ALWAYS_INLINE bool GPIOPin::Get() const { return port->DIN & mask; }
+
+class APORTX : public APORT
+{
+public:
+    constexpr APORTX(Fixed f) : APORT(f) {}
+    constexpr APORTX(APORT other) : APORT(other) {}
+    constexpr APORTX(const GPIOPin& pin) : APORT(pin.GetID().APORTX()){}
+    ALWAYS_INLINE constexpr APORTX(const GPIOPinID pin) : APORT(pin.APORTX()) {}
+};
+
+class APORTY : public APORT
+{
+public:
+    constexpr APORTY(Fixed f) : APORT(f) {}
+    constexpr APORTY(APORT other) : APORT(other) {}
+    constexpr APORTY(const GPIOPin& pin) : APORT(pin.GetID().APORTY()) {}
+    ALWAYS_INLINE constexpr APORTY(const GPIOPinID pin) : APORT(pin.APORTY()) {}
+};
