@@ -28,6 +28,9 @@ void _efm32_startup()
     MSC->CTRL |= MSC_CTRL_IFCREADCLEAR | MSC_CTRL_CLKDISFAULTEN;
     MSC->LOCK = MSC_LOCK_LOCKKEY_LOCK;
 
+    // configure AUXHFRCO to 16 MHz so that it can clock ADC directly
+    CMU->AUXHFRCOCTRL = DEVINFO->AUXHFRCOCAL7;
+
 #if TRACE
     // enable clock to GPIO
     CMU->EnableGPIO();
@@ -51,7 +54,7 @@ void _efm32_startup()
 
     // initialize TPIU
     TPI->SPPR = 2;		// NRZ protocol
-    TPI->ACPR = (19000000 / SWV_BAUD_RATE) - 1;
+    TPI->ACPR = (EFM32_AUXHFRCO_FREQUENCY / SWV_BAUD_RATE) - 1;
     TPI->FFCR = 0x100;  // EnFTC
 
     // enable ITM
