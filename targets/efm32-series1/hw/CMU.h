@@ -81,6 +81,26 @@ public:
     static constexpr unsigned GetCoreFrequency() { return 19000000; }
 #endif
 
+    void PrescaleHFEXPCLK(unsigned prescaler) { HFEXPPRESC = (prescaler - 1) << 8; }
+
+    enum struct OutputClock
+    {
+        None = _CMU_CTRL_CLKOUTSEL0_DISABLED,
+        ULFRCO = _CMU_CTRL_CLKOUTSEL0_ULFRCO,
+        LFRCO = _CMU_CTRL_CLKOUTSEL0_LFRCO,
+        LFXO = _CMU_CTRL_CLKOUTSEL0_LFXO,
+        HFXO = _CMU_CTRL_CLKOUTSEL0_HFXO,
+        HFEXPCLK = _CMU_CTRL_CLKOUTSEL0_HFEXPCLK,
+        ULFRCOQ = _CMU_CTRL_CLKOUTSEL0_ULFRCOQ,
+        LFRCOQ = _CMU_CTRL_CLKOUTSEL0_LFRCOQ,
+        LFXOQ = _CMU_CTRL_CLKOUTSEL0_LFXOQ,
+        HFXOQ = _CMU_CTRL_CLKOUTSEL0_HFXOQ,
+        HFSRCCLK = _CMU_CTRL_CLKOUTSEL0_HFSRCCLK,
+    };
+
+    void ConfigureClockOutput0(OutputClock clk) { MODMASK(CTRL, _CMU_CTRL_CLKOUTSEL0_MASK, uint32_t(clk) << _CMU_CTRL_CLKOUTSEL0_SHIFT); }
+    void ConfigureClockOutput1(OutputClock clk) { MODMASK(CTRL, _CMU_CTRL_CLKOUTSEL1_MASK, uint32_t(clk) << _CMU_CTRL_CLKOUTSEL1_SHIFT); }
+
     void EnableLE()
     {
         EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_LE);
