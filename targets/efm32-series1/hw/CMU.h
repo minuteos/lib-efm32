@@ -127,6 +127,12 @@ public:
     void DisableADC(unsigned index) { ASSERT(index < ADC_COUNT); EFM32_BITCLR(HFPERCLKEN0, CMU_HFPERCLKEN0_ADC0 << index); }
 #endif
 
+#ifdef CMU_HFPERCLKEN0_USART0
+    bool USARTEnabled(unsigned index) { ASSERT(index < USART_COUNT); return HFPERCLKEN0 & (CMU_HFPERCLKEN0_USART0 << index); }
+    void EnableUSART(unsigned index) { ASSERT(index < USART_COUNT); EFM32_BITSET(HFPERCLKEN0, CMU_HFPERCLKEN0_USART0 << index); }
+    void DisableUSART(unsigned index) { ASSERT(index < USART_COUNT); EFM32_BITCLR(HFPERCLKEN0, CMU_HFPERCLKEN0_USART0 << index); }
+#endif
+
 #ifdef CMU_HFBUSCLKEN0_USB
     bool USBEnabled() { return HFBUSCLKEN0 & CMU_HFBUSCLKEN0_USB; }
     void EnableUSB()
