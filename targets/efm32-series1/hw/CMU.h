@@ -150,6 +150,11 @@ public:
     void EnablePRS() { EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_PRS); }
 #endif
 
+#ifdef CMU_HFBUSCLKEN0_LDMA
+    bool LDMAEnabled() { return HFBUSCLKEN0 & CMU_HFBUSCLKEN0_LDMA; }
+    void EnableLDMA() { EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_LDMA); }
+#endif
+
 private:
     void IRQHandler();
 };
