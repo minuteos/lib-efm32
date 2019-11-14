@@ -24,22 +24,7 @@ PRSChannelHandle _PRS::GetChannel(PRSChannel::Flags flags)
 {
     EnableClock();
 
-    unsigned i, free = ~0u;
-
-    for (i = 0; i < countof(CH); i++)
-    {
-        if (CH[i].CTRL == flags)
-        {
-            return i;
-        }
-        else if (CH[i].CTRL == 0)
-        {
-            free = i;
-            break;
-        }
-    }
-
-    for (; i < countof(CH); i++)
+    for (unsigned i = 0; i < countof(CH); i++)
     {
         if (CH[i].CTRL == flags)
         {
@@ -47,14 +32,15 @@ PRSChannelHandle _PRS::GetChannel(PRSChannel::Flags flags)
         }
     }
 
-    if (free != ~0u)
+    for (unsigned i = 0; i < countof(CH); i++)
     {
-        CH[free].CTRL = flags;
-    }
-    else
-    {
-        ASSERT(false);
+        if (CH[i].CTRL == 0)
+        {
+            CH[i].CTRL = flags;
+            return i;
+        }
     }
 
-    return free;
+    ASSERT(false);
+    return ~0u;
 }

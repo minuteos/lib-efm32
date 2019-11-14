@@ -126,7 +126,8 @@ public:
 class _PRS : public PRS_TypeDef
 {
 public:
-#ifdef EFM32GG11
+#ifdef _SILICON_LABS_32B_SERIES_1
+#ifdef _EFM32_GIANT_FAMILY
     void ConfigureOutput0(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, ROUTEPEN, 0,
             GPIO_LOC(pA(0), pF(3), pC(14), pF(2))); }
     void ConfigureOutput1(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, ROUTEPEN, 1,
@@ -200,6 +201,7 @@ public:
             GPIO_LOC(pC(6), pC(7), pC(8), pC(9), pC(10), pC(11))); }
     void ConfigureOutput11(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, ROUTEPEN, 11, 15,
             GPIO_LOC(pC(7), pC(8), pC(9), pC(10), pC(11), pC(6))); }
+#endif
 #endif
 
     //! Configures a 1 MHz DMA trigger on the specified channel (useful for things such as DMA-based PWM)
