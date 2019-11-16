@@ -9,7 +9,7 @@
  */
 
 SECTIONS {
-    .bootloader : {
+    .bin.bootloader : {
         KEEP(*(.binboot*))
     } >FLASH_BOOT
 }
