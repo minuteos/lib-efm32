@@ -8,6 +8,12 @@
 
 EFM32_DEV_ROOT ?= /Applications/Simplicity\ Studio.app/Contents/Eclipse/developer/
 EFM32_SDKS ?= $(EFM32_DEV_ROOT)sdks/gecko_sdk_suite/
+SI_COMMANDER ?= $(EFM32_DEV_ROOT)adapter_packs/commander/Commander.app/Contents/MacOS/commander
+
+ifeq (,$(SI_COMMANDER))
+  # hopefully will be in the path
+  SI_COMMANDER = commander
+endif
 
 # find the latest available version of the SDK
 EFM32_SDK_VERSION ?= $(lastword $(sort $(filter-out Simplicity,$(notdir $(wildcard $(EFM32_SDKS)/*)))))
