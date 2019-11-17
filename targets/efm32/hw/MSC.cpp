@@ -10,8 +10,6 @@
 
 #include <hw/SCB.h>
 
-#include <ld_symbols.h>
-
 //#define MSC_TRACE 1
 
 #define MYDBG(...)  DBGCL("FLASH", __VA_ARGS__)
@@ -28,9 +26,6 @@ static constexpr uint32_t PageWords = PageSize / sizeof(uint32_t);
 
 bool _MSC::WriteWord(const volatile void* ptr, uint32_t value)
 {
-    if (ptr < &__boot_end)
-        return false;
-
     UnlockFlash();
 
     ADDRB = (uint32_t)ptr;
@@ -54,9 +49,6 @@ bool _MSC::WriteWord(const volatile void* ptr, uint32_t value)
 
 bool _MSC::Write(const volatile void* address, Span data)
 {
-    if (address < &__boot_end)
-        return false;
-
     uint32_t addr = (uint32_t)address;
     uint32_t wdata = (uint32_t)data.begin();
     uint32_t length = (uint32_t)data.Length();
@@ -124,10 +116,6 @@ bool _MSC::Erase(const volatile void* address, uint32_t length)
 {
     uint32_t* p = (uint32_t*)((uint32_t)address & PageMask);
     uint32_t* end = (uint32_t*)(((uint32_t)address + length - 1) & PageMask);
-
-    if (p < &__boot_end)
-        p = &__boot_end;
-
     uint32_t retry = 3;
 
     while (p < end)
@@ -250,11 +238,6 @@ async_def()
     } op = {};
 
     uint32_t* p = (uint32_t*)((uint32_t)address & ~(PageSize - 1));
-
-    if (p < &__boot_end)
-    {
-        async_return(false);
-    }
 
     if (IsErased(p))
     {
