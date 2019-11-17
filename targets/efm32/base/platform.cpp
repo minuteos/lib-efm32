@@ -70,3 +70,12 @@ void _efm32_startup()
     EFM32_RTC->Configure();
 #endif
 }
+
+void _efm32_before_boot()
+{
+    // the apploader accesses unclocked peripherals, we must
+    // disable the fault before continuing
+    MSC->LOCK = MSC_LOCK_LOCKKEY_UNLOCK;
+    MSC->CTRL &= ~(MSC_CTRL_IFCREADCLEAR | MSC_CTRL_CLKDISFAULTEN);
+    MSC->LOCK = MSC_LOCK_LOCKKEY_LOCK;
+}
