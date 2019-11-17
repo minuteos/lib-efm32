@@ -9,21 +9,21 @@
 GBL_SIGN_KEY ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem)
 GBL_CRYPT_KEY ?= $(wildcard $(PROJECT_ROOT)app-encrypt-key.txt)
 
-.INTERMEDIATE: $(OUTPUT)-app.srec
+GBL_APP_SREC = $(OBJDIR)gbl-app.srec
 
-$(OUTPUT)-app.srec: $(PRIMARY_OUTPUT)
+$(GBL_APP_SREC): $(PRIMARY_OUTPUT)
 	$(OBJCOPY) -O srec -j ".text*" $< $@
 
-GBL_INPUT = $(OUTPUT)-app.srec
+GBL_INPUT = $(GBL_APP_SREC)
 
 ifneq (,$(GBL_SIGN_KEY))
 
-GBL_INPUT = $(OUTPUT)-signed.srec
+GBL_SIGN_SREC = $(OBJDIR)gbl-sign.srec
+GBL_INPUT = $(GBL_SIGN_SREC)
 GBL_OPTS += --sign $(GBL_SIGN_KEY)
+GBL_DEPS += $(GBL_SIGN_KEY)
 
-.INTERMEDIATE: $(OUTPUT)-signed.srec
-
-$(OUTPUT)-signed.srec: $(OUTPUT)-app.srec
+$(GBL_SIGN_SREC): $(GBL_APP_SREC) $(GBL_SIGN_KEY)
 	$(SI_COMMANDER) convert $< --secureboot --keyfile $(GBL_SIGN_KEY) -o $@
 
 endif
@@ -31,6 +31,7 @@ endif
 ifneq (,$(GBL_CRYPT_KEY))
 
 GBL_OPTS += --encrypt $(GBL_CRYPT_KEY)
+GBL_DEPS += $(GBL_CRYPT_KEY)
 
 endif
 
@@ -40,5 +41,5 @@ all: gbl
 
 gbl: $(OUTPUT).gbl
 
-$(OUTPUT).gbl: $(GBL_INPUT)
+$(OUTPUT).gbl: $(GBL_INPUT) $(GBL_DEPS)
 	$(SI_COMMANDER) gbl create $@ --app $< $(GBL_OPTS)
