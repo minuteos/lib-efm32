@@ -118,7 +118,7 @@ bool _MSC::Erase(const volatile void* address, uint32_t length)
     uint32_t* end = (uint32_t*)(((uint32_t)address + length - 1) & PageMask);
     uint32_t retry = 3;
 
-    while (p < end)
+    while (p <= end)
     {
         if (IsErased(p))
         {
@@ -140,6 +140,8 @@ bool _MSC::Erase(const volatile void* address, uint32_t length)
 
         ADDRB = (uint32_t)p;
         WRITECMD = MSC_WRITECMD_LADDRIM | MSC_WRITECMD_ERASEPAGE;
+
+        Sync();
 
         LockFlash();
     }
