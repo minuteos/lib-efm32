@@ -20,14 +20,6 @@ void _efm32_startup()
     // this is an inline function, so we actually don't need the full emlib component for it, just the headers
     CHIP_Init();
 
-    // use the "clear interrupts on read" semantics (reading IFC is the same as IFC = IF)
-    // also enable bus faults when accessing disabled peripherals
-    // silently ignoring these errors sometimes causes very hard to find bugs
-    if (MSC->LOCK & MSC_LOCK_LOCKKEY_LOCKED)
-        MSC->LOCK = MSC_LOCK_LOCKKEY_UNLOCK;
-    MSC->CTRL |= MSC_CTRL_IFCREADCLEAR | MSC_CTRL_CLKDISFAULTEN;
-    MSC->LOCK = MSC_LOCK_LOCKKEY_LOCK;
-
     // configure AUXHFRCO to 16 MHz so that it can clock ADC directly
     CMU->AUXHFRCOCTRL = DEVINFO->AUXHFRCOCAL7;
 
@@ -61,6 +53,17 @@ void _efm32_startup()
     ITM->TCR = 0x10009;
     ITM->TER = ~0u;		// enable all channels
 #endif
+}
+
+void _efm32_c_startup()
+{
+    // use the "clear interrupts on read" semantics (reading IFC is the same as IFC = IF)
+    // also enable bus faults when accessing disabled peripherals
+    // silently ignoring these errors sometimes causes very hard to find bugs
+    if (MSC->LOCK & MSC_LOCK_LOCKKEY_LOCKED)
+        MSC->LOCK = MSC_LOCK_LOCKKEY_UNLOCK;
+    MSC->CTRL |= MSC_CTRL_IFCREADCLEAR | MSC_CTRL_CLKDISFAULTEN;
+    MSC->LOCK = MSC_LOCK_LOCKKEY_LOCK;
 
     EMU->Configure();
     CMU->Configure();
@@ -71,11 +74,3 @@ void _efm32_startup()
 #endif
 }
 
-void _efm32_before_boot()
-{
-    // the apploader accesses unclocked peripherals, we must
-    // disable the fault before continuing
-    MSC->LOCK = MSC_LOCK_LOCKKEY_UNLOCK;
-    MSC->CTRL &= ~(MSC_CTRL_IFCREADCLEAR | MSC_CTRL_CLKDISFAULTEN);
-    MSC->LOCK = MSC_LOCK_LOCKKEY_LOCK;
-}

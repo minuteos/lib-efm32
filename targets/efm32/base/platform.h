@@ -9,7 +9,7 @@
 #pragma once
 
 #define CORTEX_STARTUP_HARDWARE_INIT	_efm32_startup
-#define CORTEX_STARTUP_BEFORE_BOOT	    _efm32_before_boot
+#define CORTEX_STARTUP_BEFORE_C_INIT	_efm32_c_startup
 
 #define EFM32_AUXHFRCO_FREQUENCY    16000000
 
@@ -20,4 +20,4 @@
 #include_next <base/platform.h>
 
 extern void _efm32_startup();
-extern void _efm32_before_boot();
+extern void _efm32_c_startup();
