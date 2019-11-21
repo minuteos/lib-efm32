@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# Script to update sections of an ELF file with the corresponding
+# parts of a SREC file
+
+set -e
+
+INPUT=$1
+PATCH=$2
+PATCHBIN=$2.bin
+OUTPUT=$3
+OUTPUTTMP=$3.tmp
+OBJCOPY=$4
+OBJDUMP=$5
+
+# scan the "patch" file
+while read idx name size vma lma off algn; do
+    # skip lines without index
+    if [[ ! $idx =~ ^-?[0-9]+$ ]]; then continue; fi
+
+    PATCH_BASE=$((0x$vma))
+    PATCH_SIZE=$((0x$size))
+done < <($OBJDUMP -h $PATCH)
+
+# we need a binary source for dd
+echo Patch file $PATCH base address = $PATCH_BASE, size = $PATCH_SIZE
+$OBJCOPY -I srec -O binary $PATCH $PATCHBIN
+
+cp $INPUT $OUTPUTTMP
+
+# Process all sections in the ELF
+while read idx name size vma lma off algn; do
+    # skip lines without index
+    if [[ ! $idx =~ ^-?[0-9]+$ ]]; then continue; fi
+
+    SEC_SIZE=$((0x$size))
+
+    # skip sections with zero size
+    if [[ $SEC_SIZE -eq 0 ]]; then continue; fi
+
+    PATCH_OFFSET=$((0x$lma - $PATCH_BASE))
+
+    # skip sections that fall outside the patch file
+    if [[ $PATCH_OFFSET -lt 0 ]] || [[ $PATCH_OFFSET -gt $PATCH_SIZE ]]; then continue; fi
+
+    OUTPUT_OFFSET=$((0x$off))
+
+    # patch the section
+    if cmp $PATCHBIN $OUTPUTTMP $PATCH_OFFSET $OUTPUT_OFFSET -n $SEC_SIZE >/dev/null; then continue; fi
+
+    echo "Patching section $name ($SEC_SIZE bytes @ 0x$lma)"
+    dd if=$PATCHBIN of=$OUTPUTTMP conv=notrunc bs=1 iseek=$PATCH_OFFSET oseek=$OUTPUT_OFFSET count=$SEC_SIZE 2>/dev/null
+done < <($OBJDUMP -h $INPUT)
+
+rm $PATCHBIN
+mv $OUTPUTTMP $OUTPUT

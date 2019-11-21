@@ -6,40 +6,32 @@
 # efm32/build-gbl/IncludePost.mk
 #
 
-GBL_SIGN_KEY ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem)
-GBL_CRYPT_KEY ?= $(wildcard $(PROJECT_ROOT)app-encrypt-key.txt)
+ifneq (,$(GECKO_SIGN_KEY))
 
-GBL_APP_SREC = $(OBJDIR)gbl-app.srec
+GBL_INPUT = $(GECKO_APP_SIGNED_SREC)
+GBL_OPTS += --sign $(GECKO_SIGN_KEY)
+GBL_DEPS += $(GECKO_SIGN_KEY)
 
-$(GBL_APP_SREC): $(PRIMARY_OUTPUT)
-	$(OBJCOPY) -O srec -j ".text*" $< $@
+else
 
-GBL_INPUT = $(GBL_APP_SREC)
-
-ifneq (,$(GBL_SIGN_KEY))
-
-GBL_SIGN_SREC = $(OBJDIR)gbl-sign.srec
-GBL_INPUT = $(GBL_SIGN_SREC)
-GBL_OPTS += --sign $(GBL_SIGN_KEY)
-GBL_DEPS += $(GBL_SIGN_KEY)
-
-$(GBL_SIGN_SREC): $(GBL_APP_SREC) $(GBL_SIGN_KEY)
-	$(SI_COMMANDER) convert $< --secureboot --keyfile $(GBL_SIGN_KEY) -o $@
+GBL_INPUT = $(GECKO_APP_SREC)
 
 endif
 
-ifneq (,$(GBL_CRYPT_KEY))
+ifneq (,$(GECKO_CRYPT_KEY))
 
-GBL_OPTS += --encrypt $(GBL_CRYPT_KEY)
-GBL_DEPS += $(GBL_CRYPT_KEY)
+GBL_OPTS += --encrypt $(GECKO_CRYPT_KEY)
+GBL_DEPS += $(GECKO_CRYPT_KEY)
 
 endif
+
+GECKO_GBL = $(OUTPUT).gbl
 
 .PHONY: gbl
 
 all: gbl
 
-gbl: $(OUTPUT).gbl
+gbl: $(GECKO_GBL)
 
-$(OUTPUT).gbl: $(GBL_INPUT) $(GBL_DEPS)
+$(GECKO_GBL): $(GBL_INPUT) $(GBL_DEPS)
 	$(SI_COMMANDER) gbl create $@ --app $< $(GBL_OPTS)

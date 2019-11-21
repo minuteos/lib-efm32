@@ -74,3 +74,6 @@ void _efm32_c_startup()
 #endif
 }
 
+#if GECKO_SIGNATURE
+__attribute__((section(".sig_gecko"))) uint8_t _efm32_signature[64];
+#endif

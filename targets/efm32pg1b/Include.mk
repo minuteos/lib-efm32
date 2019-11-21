@@ -11,3 +11,4 @@ TARGETS += efm32-series1 cortex-m4f
 EFM32_DEVICE ?= EFM32PG1B
 # use the most full-featured part by default
 EFM32_PART ?= efm32pg1b200f256gm48.h
+GBL_VARIANT = efx32jg1b

@@ -8,16 +8,9 @@
  * Inserts the first stage bootloader before the main bootloader
  */
 
-ENTRY(FirstStage)
-
 SECTIONS {
-    .firststage : {
-        __firststage_start = .;
-        KEEP(*(.firststage))
-        . = __firststage_start + 0x28;   /* pointer to table must be at offset 0x28 */
-        LONG(__firststage_table);
-        __firststage_table = .;
-        KEEP(*(.firststage*))
+    .bin.firststage : {
+        KEEP(*(.bin.firststage))
         . = ALIGN(2048);
     } >FLASH_BOOT
 }
