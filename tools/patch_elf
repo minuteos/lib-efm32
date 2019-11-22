@@ -49,7 +49,7 @@ while read idx name size vma lma off algn; do
     if cmp $PATCHBIN $OUTPUTTMP $PATCH_OFFSET $OUTPUT_OFFSET -n $SEC_SIZE >/dev/null; then continue; fi
 
     echo "Patching section $name ($SEC_SIZE bytes @ 0x$lma)"
-    dd if=$PATCHBIN of=$OUTPUTTMP conv=notrunc bs=1 iseek=$PATCH_OFFSET oseek=$OUTPUT_OFFSET count=$SEC_SIZE 2>/dev/null
+    dd if=$PATCHBIN of=$OUTPUTTMP conv=notrunc bs=1 skip=$PATCH_OFFSET seek=$OUTPUT_OFFSET count=$SEC_SIZE 2>/dev/null
 done < <($OBJDUMP -h $INPUT)
 
 rm $PATCHBIN
