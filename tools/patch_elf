@@ -35,8 +35,8 @@ while read idx name size vma lma off algn; do
 
     SEC_SIZE=$((0x$size))
 
-    # skip sections with zero size
-    if [[ $SEC_SIZE -eq 0 ]]; then continue; fi
+    # skip sections with zero size or LMA
+    if [[ $SEC_SIZE -eq 0 ]] || [[ $((0x$lma)) -eq 0 ]]; then continue; fi
 
     PATCH_OFFSET=$((0x$lma - $PATCH_BASE))
 
