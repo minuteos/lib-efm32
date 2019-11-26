@@ -301,7 +301,7 @@ public:
     async(SyncTransferSingle, uint32_t data);
 
 private:
-    res_pair_t BeginSyncTransferImpl(SyncTransferDescriptor* descriptors, size_t count);
+    RES_PAIR_DECL(BeginSyncTransferImpl, SyncTransferDescriptor* descriptors, size_t count);
 };
 
 DEFINE_FLAG_ENUM(USART::Flags);
