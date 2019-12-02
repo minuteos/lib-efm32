@@ -8,10 +8,6 @@
 # additional targets for EFM32, such as signed, encrypted, etc...
 #
 
-GECKO_SIGN_KEY ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem)
-GECKO_SIGN_KEY_PUB ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem.pub)
-GECKO_CRYPT_KEY ?= $(wildcard $(PROJECT_ROOT)app-encrypt-key.txt)
-
 GECKO_APP_SREC = $(OUTPUT)-app.s37
 
 .PHONY: app-srec

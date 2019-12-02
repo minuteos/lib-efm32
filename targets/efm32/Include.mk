@@ -47,6 +47,11 @@ EFM32_PART_HEADER := $(firstword $(sort $(filter-out Simplicity,$(notdir $(wildc
 EFM32_SYSTEM_SOURCE := $(firstword $(sort $(filter-out Simplicity,$(notdir $(wildcard $(EFM32_SDK_ORIGIN)platform/Device/SiliconLabs/$(EFM32_DEVICE)/Source/*.c)))))
 EFM32_SYSTEM_SOURCE_PATH := $(EFM32_SDK_DEVICE)Source/$(EFM32_SYSTEM_SOURCE)
 
+# check for default signing and encryption keys
+GECKO_SIGN_KEY ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem)
+GECKO_SIGN_KEY_PUB ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem.pub)
+GECKO_CRYPT_KEY ?= $(wildcard $(PROJECT_ROOT)app-encrypt-key.txt)
+
 INCLUDE_DIRS += $(EFM32_DEVICE_INCLUDE) $(EFM32_CMSIS_INCLUDE) $(EFM32_EMLIB_INCLUDE) $(EFM32_BOOT_INCLUDE) $(EFM32_MBEDTLS_INCLUDE)
 LIB_DIRS += $(EFM32_SDK_BOOT)build/lib/
 ADDITIONAL_SOURCES += $(EFM32_SYSTEM_SOURCE_PATH)
