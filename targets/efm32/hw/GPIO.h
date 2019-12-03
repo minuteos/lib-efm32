@@ -481,7 +481,7 @@ class GPIOPin;
 //! Represents an invalid/unused GPIO pin - it still gets a valid port, but no mask
 #define Px       GPIOPin((GPIOPort*)&GPIO->P[0], 0)
 
-ALWAYS_INLINE constexpr GPIOPinID GPIOPin::GetID() const { return ((GPIOPort::GetIndex(port) + 1) << 4) | Index(); }
+ALWAYS_INLINE constexpr GPIOPinID GPIOPin::GetID() const { return GPIOPinID(GPIOPort::GetIndex(port), Index()); }
 
 ALWAYS_INLINE void GPIOPin::Configure(Mode mode) const { port->Configure(mask, mode); }
 ALWAYS_INLINE void GPIOPin::ConfigureAlternate(Mode mode, volatile uint32_t& routepen, uint8_t route, uint8_t locIndex, GPIOLocations_t locations) const { port->ConfigureAlternate(GPIOPort::AltSpec(Index(), mode, route, locIndex), routepen, locations); }
