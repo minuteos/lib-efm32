@@ -183,7 +183,7 @@ private:
             case 2: return 96 + 16; // PORT B = APORT3/4 CH27-31 for PB11-15 (+16)
             case 3: return 32 + 0;  // PORT C = APORT1/2 CH6-11 for PC6-11 (+0)
             case 4: return 96 - 8;  // PORT D = APORT3/4 CH1-7 for PD9-15 (-8)
-            case 5: return 32 + 16; // PORT F = APORT1/2 CH16-23 for PF0-7 (+16)
+            case 6: return 32 + 16; // PORT F = APORT1/2 CH16-23 for PF0-7 (+16)
         }
         return 0;
     }
@@ -213,7 +213,7 @@ public:
     //! Gets the GPIOPort to which the GPIOPin belongs
     constexpr GPIOPort& Port() const { return *port; }
     //! Gets the bitmask of the GPIOPin
-    constexpr uint32_t Mask() const { return mask; }
+    constexpr const uint32_t& Mask() const { return mask; }
     //! Gets the index of the GPIOPin
     /*! If there are multiple bits set in the Mask, the index of the lowest one is returned */
     constexpr uint32_t Index() const { return __builtin_ctz(mask); }
