@@ -117,6 +117,11 @@ private:
 public:
     constexpr operator unsigned() const { return index; }
 
+    ALWAYS_INLINE unsigned Index() const { return index; }
+    ALWAYS_INLINE void Setup(PRSChannel::Flags flags) { PRS->CH[index].CTRL = flags; }
+
+    ALWAYS_INLINE void DMARequest(unsigned n) { (&PRS->DMAREQ0)[n] = Index() << _PRS_DMAREQ0_PRSSEL_SHIFT; }
+
     friend class _PRS;
 };
 
