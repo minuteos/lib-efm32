@@ -41,20 +41,45 @@ void ADC::ScanSetup(ModeFlags flags, const APORT* ports, size_t count)
     SCANMASK = mask;
 }
 
+void ADC::EnableIRQ()
+{
+    Cortex_SetIRQWakeup(ADC0_IRQn);
+    NVIC_ClearPendingIRQ(ADC0_IRQn);
+    NVIC_EnableIRQ(ADC0_IRQn);
+}
+
+void ADC::TryDisableIRQ()
+{
+    if (IEN)
+        NVIC_ClearPendingIRQ(ADC0_IRQn);
+    else
+        NVIC_DisableIRQ(ADC0_IRQn);
+}
+
 async(ADC::_MeasureSingle, uint32_t singleCtrl)
 async_def()
 {
-    ASSERT(!Active());
+    ASSERT(!SingleActive());
 
     SINGLECTRL = singleCtrl;
     SingleStart();
 
-    IEN = ADC_IEN_SINGLE;
-    Cortex_SetIRQWakeup(ADC0_IRQn);
-    NVIC_ClearPendingIRQ(ADC0_IRQn);
-    NVIC_EnableIRQ(ADC0_IRQn);
+    IEN |= ADC_IEN_SINGLE;
+    EnableIRQ();
     await_mask(IF, ADC_IF_SINGLE, ADC_IF_SINGLE);
-    NVIC_DisableIRQ(ADC0_IRQn);
+    IEN &= ~ADC_IEN_SINGLE;
+    TryDisableIRQ();
     async_return(SingleRead());
+}
+async_end
+
+async(ADC::WaitForScan)
+async_def()
+{
+    IEN |= ADC_IEN_SCAN;
+    EnableIRQ();
+    await_mask(IF, ADC_IF_SCAN, ADC_IF_SCAN);
+    IEN &= ~ADC_IEN_SCAN;
+    TryDisableIRQ();
 }
 async_end

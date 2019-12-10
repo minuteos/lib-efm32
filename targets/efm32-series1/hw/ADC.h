@@ -81,6 +81,8 @@ public:
         Acquisition128C = ADC_SINGLECTRL_AT_128CYCLES,
         Acquisition256C = ADC_SINGLECTRL_AT_256CYCLES,
         AcquisitionMask = _ADC_SINGLECTRL_AT_MASK,
+
+        PRSEnable = ADC_SINGLECTRL_PRSEN,
     };
 
     int Index() const { return 0; }
@@ -147,11 +149,15 @@ public:
     volatile const void* ScanPtr() { return &SCANDATA; }
 
     async(MeasureSingle, ModeFlags flags, APORTX pos, APORTY neg = APORTY::VSS) { return async_forward(_MeasureSingle, flags | pos << 8 | neg << 16); }
+    async(WaitForScan);
 
     constexpr static float Multiplier(float range) { return range / 65535; }
 
 private:
     async(_MeasureSingle, uint32_t singleCtrl);
+
+    static void EnableIRQ();
+    void TryDisableIRQ();
 };
 
 DEFINE_FLAG_ENUM(ADC::Flags);
