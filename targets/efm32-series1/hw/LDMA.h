@@ -103,10 +103,10 @@ public:
         DestinationIncrement0 = LDMA_CH_CTRL_DSTINC_NONE,
 
         // some common flag combinations follow
-        M2M = BlockSize1 | SourceIncrement1 | DestinationIncrement1,
-        M2P = BlockSize1 | SourceIncrement1 | DestinationIncrement0,
-        P2M = BlockSize1 | SourceIncrement0 | DestinationIncrement1,
-        P2P = BlockSize1 | SourceIncrement0 | DestinationIncrement0,
+        M2M = SourceIncrement1 | DestinationIncrement1,
+        M2P = SourceIncrement1 | DestinationIncrement0,
+        P2M = SourceIncrement0 | DestinationIncrement1,
+        P2P = SourceIncrement0 | DestinationIncrement0,
     };
 
     //! Clears the descriptor
@@ -445,6 +445,8 @@ public:
 
     //! Gets the LDMAChannelHandle for the channel with the specified index
     LDMAChannelHandle GetChannelByIndex(unsigned n) { return n; }
+    //! Allocates a LDMAChannelHandle for a software triggered channel
+    LDMAChannelHandle GetTriggeredChannel() { return GetChannel(LDMAChannel::SourceNone << 16 | 1, false); }
     //! Allocates a LDMAChannelHandle for the specified PRS channel, optionally reusing a previously allocated channel
     LDMAChannelHandle GetPRSChannel(unsigned index, bool reuse = true) { return GetChannel(LDMAChannel::SourcePRS << 16 | index, reuse); }
     //! Allocates a LDMAChannelHandle for the specified ADC peripheral and signal, optionally reusing a previously allocated channel
