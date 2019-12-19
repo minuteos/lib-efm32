@@ -12,3 +12,4 @@ EFM32_DEVICE ?= EFM32BG13P
 # use the most full-featured part by default
 EFM32_PART ?= efm32bg13p632f512gm.h
 GBL_VARIANT = efx32xg13
+JLINK_DEVICE ?= EFR32BG13PxxxF512
