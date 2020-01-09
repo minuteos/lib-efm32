@@ -16,7 +16,7 @@ SI_INSTALL := $(filter si-install,$(MAKECMDGOALS))
 ifeq (,$(wildcard $(EFM32_DEV_ROOT)))
   # try to find simplicity studio in default platform location
   ifeq (Darwin,$(HOST_OS))
-    EFM32_DEV_ROOT := $(wildcard /Applications/Simplicity\ Studio.app/Contents/Eclipse/developer/)
+    EFM32_DEV_ROOT := $(call escspace,$(wildcard /Applications/Simplicity\ Studio.app/Contents/Eclipse/developer/))
   endif
   ifeq (Linux,$(HOST_OS))
     EFM32_DEV_ROOT := $(firstword $(wildcard $(addsuffix /SimplicityStudio_v4/developer/,$(HOME)/.minuteos $(HOME) /opt /usr/local)))
@@ -45,7 +45,7 @@ EFM32_SDKS ?= $(EFM32_DEV_ROOT)sdks/gecko_sdk_suite/
 ifeq (,$(wildcard $(SI_COMMANDER)))
   # try to find simplicity commander
   ifeq (Darwin,$(HOST_OS))
-    SI_COMMANDER := $(wildcard $(EFM32_DEV_ROOT)adapter_packs/commander/Commander.app/Contents/MacOS/commander)
+    SI_COMMANDER := $(call escspace,$(wildcard $(EFM32_DEV_ROOT)adapter_packs/commander/Commander.app/Contents/MacOS/commander))
   else
     SI_COMMANDER := $(wildcard $(EFM32_DEV_ROOT)adapter_packs/commander/commander)
   endif
