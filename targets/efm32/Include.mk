@@ -11,17 +11,62 @@ EFM32_LIB_DIR = $(call parentdir,$(call parentdir,$(call parentdir,$(EFM32_MAKEF
 
 EFM32_TOOL_DIR = $(EFM32_LIB_DIR)tools/
 
-EFM32_DEV_ROOT ?= /Applications/Simplicity\ Studio.app/Contents/Eclipse/developer/
-EFM32_SDKS ?= $(EFM32_DEV_ROOT)sdks/gecko_sdk_suite/
-SI_COMMANDER ?= $(EFM32_DEV_ROOT)adapter_packs/commander/Commander.app/Contents/MacOS/commander
+SI_INSTALL := $(filter si-install,$(MAKECMDGOALS))
 
-ifeq (,$(SI_COMMANDER))
-  # hopefully will be in the path
-  SI_COMMANDER = commander
+ifeq (,$(wildcard $(EFM32_DEV_ROOT)))
+  # try to find simplicity studio in default platform location
+  ifeq (Darwin,$(HOST_OS))
+    EFM32_DEV_ROOT := $(wildcard /Applications/Simplicity\ Studio.app/Contents/Eclipse/developer/)
+  endif
+  ifeq (Linux,$(HOST_OS))
+    EFM32_DEV_ROOT := $(firstword $(wildcard $(addsuffix /SimplicityStudio_v4/developer/,$(HOME)/.minuteos $(HOME) /opt /usr/local)))
+  endif
+
+  ifeq (,$(EFM32_DEV_ROOT))
+    ifeq (,$(SI_INSTALL))
+      $(error Simplicity Studio not found, use 'make si-install' to download a private copy)
+    else
+      EFM32_DEV_ROOT := $(HOME)/.minuteos/SimplicityStudio_v4/developer/
+    endif
+  endif
+endif
+
+$(info Simplicity Studio developer root: $(EFM32_DEV_ROOT))
+
+ifneq (,$(wildcard $(EFM32_DEV_ROOT)toolchains/gnu_arm/7.2_2017q4/bin/))
+  $(info Using GCC 7.2 from Simplicity Studio)
+  export PATH := $(EFM32_DEV_ROOT)toolchains/gnu_arm/7.2_2017q4/bin/:$(PATH)
+else
+  $(warning Simplicity Studio GCC 7.2 not found, recommend installing it using 'make si-install PACKAGE=com.silabs.ss.toolchain.gnu.arm.7.2.2017.q4')
+endif
+
+EFM32_SDKS ?= $(EFM32_DEV_ROOT)sdks/gecko_sdk_suite/
+
+ifeq (,$(wildcard $(SI_COMMANDER)))
+  # try to find simplicity commander
+  ifeq (Darwin,$(HOST_OS))
+    SI_COMMANDER := $(wildcard $(EFM32_DEV_ROOT)adapter_packs/commander/Commander.app/Contents/MacOS/commander)
+  else
+    SI_COMMANDER := $(wildcard $(EFM32_DEV_ROOT)adapter_packs/commander/commander)
+  endif
+
+  ifeq (,$(SI_COMMANDER))
+    ifeq (,$(SI_INSTALL))
+      $(error Simplicity Commander not found, use 'make si-install PACKAGE=com.silabs.apack.commander' to install it or set SI_COMMANDER explicitly)
+    endif
+  endif
 endif
 
 # find the latest available version of the SDK
-EFM32_SDK_VERSION ?= $(lastword $(sort $(filter-out Simplicity,$(notdir $(wildcard $(EFM32_SDKS)/*)))))
+ifeq (,$(EFM32_SDK_VERSION))
+  EFM32_SDK_VERSION ?= $(lastword $(sort $(filter-out Simplicity,$(notdir $(wildcard $(EFM32_SDKS)/*)))))
+  ifeq (,$(EFM32_SDK_VERSION))
+	EFM32_SDK_VERSION = v2.7
+    $(warning EFM32_SDK_VERSION not specified explicitly, using recommended version: $(EFM32_SDK_VERSION))
+  else
+    $(warning EFM32_SDK_VERSION not specified explicitly, using latest available version: $(EFM32_SDK_VERSION))
+  endif
+endif
 
 # we need to link the SDK into our build directory, as it typically contains spaces which Makefile cannot handle at all
 EFM32_SDK_ORIGIN ?= $(EFM32_SDKS)$(EFM32_SDK_VERSION)/
@@ -58,8 +103,11 @@ ADDITIONAL_SOURCES += $(EFM32_SYSTEM_SOURCE_PATH)
 DEFINES += EFM32_DEVICE=$(EFM32_DEVICE) EFM32_PART_HEADER=$(EFM32_PART_HEADER) MBEDTLS_CONFIG_FILE=\"../configs/config-sl-crypto-all-acceleration.h\"
 COMPONENTS += hw emlib
 
+ifeq (,$(SI_INSTALL))
+
+# validate paths
 ifeq (,$(wildcard $(EFM32_SDK_ORIGIN)))
-  $(error Failed to locate EFM32 SDK in $(EFM32_SDKS), please specify EFM32_SDK_ORIGIN manually)
+  $(error Failed to locate EFM32 SDK $(EFM32_SDK_VERSION) in $(EFM32_SDKS), use 'make si-install PACKAGE=com.silabs.sdk.gecko_platform.$(EFM32_SDK_VERSION)' or specify EFM32_SDK_ORIGIN manually)
 endif
 
 ifeq (,$(EFM32_DEVICE))
@@ -70,7 +118,21 @@ ifeq (,$(EFM32_PART))
   $(error Failed to autodetect EFM32 part, please specify manually)
 endif
 
-.PHONY: efm32_sdk
+else
+
+# we're going to install Simplicity Studio and/or packages
+ifeq (Darwin,$(HOST_OS))
+  SI_STUDIO := $(EFM32_DEV_ROOT)../../MacOS/studio
+else
+  SI_STUDIO := $(EFM32_DEV_ROOT)../studio
+endif
+
+SI_REPOSITORY := https://developer.silabs.com/studio/v4/updates,https://developer.silabs.com/studio/v4/control/stacks/PublicGA/updates
+SI_DIRECTOR := $(SI_STUDIO) -nosplash -consolelog -application org.eclipse.equinox.p2.director -r $(SI_REPOSITORY)
+
+endif
+
+.PHONY: efm32_sdk si-install
 
 all: srec
 
@@ -97,3 +159,40 @@ $(EFM32_SDK_BOOT): $(OBJDIR)
 
 $(EFM32_SDK_MBEDTLS) : $(OBJDIR)
 	@$(LN) -snf $(EFM32_SDK_ORIGIN_MBEDTLS) $(EFM32_SDK_MBEDTLS:/=)
+
+$(EFM32_DEV_ROOT):
+	@$(MKDIR) -p $(EFM32_DEV_ROOT)
+
+si-install: $(EFM32_DEV_ROOT) $(SI_STUDIO)
+
+ifneq (,$(PACKAGE))
+
+si-install:
+	$(SI_DIRECTOR) -i $(addsuffix .feature.feature.group,$(PACKAGE))
+
+endif
+
+ifneq (,$(PACKAGE_SEARCH))
+
+si-install:
+	$(SI_DIRECTOR) -l $(PACKAGE_SEARCH)
+
+endif
+
+# download simplicity studio itself
+
+ifeq (Linux,$(HOST_OS))
+
+SI_STUDIO_ROOT := $(call parentdir,$(EFM32_DEV_ROOT))
+SI_STUDIO_DL_TMP := $(call parentdir,$(SI_STUDIO_ROOT)).download/
+
+$(SI_STUDIO):
+	$(info Downoading Simplicity Studio v4)
+	rm -rf $(SI_STUDIO_DL_TMP)
+	mkdir -p $(SI_STUDIO_DL_TMP)
+	wget https://www.silabs.com/documents/login/software/SimplicityStudio-v4.tgz -O - | tar -xzC $(SI_STUDIO_DL_TMP)
+	rm -rf $(SI_STUDIO_ROOT)
+	mv $(SI_STUDIO_DL_TMP)SimplicityStudio_v4 $(SI_STUDIO_ROOT:/=)
+	rm -rf $(SI_STUDIO_DL_TMP)
+
+endif
