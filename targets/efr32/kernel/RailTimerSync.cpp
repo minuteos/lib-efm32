@@ -62,3 +62,9 @@ extern "C" void BG_Sleep()
 {
     ASSERT(false);
 }
+
+//! never called, allows the linker to strip a lot of sleep code from libbluetooth
+extern "C" void SleepAndSyncProtimer()
+{
+    ASSERT(false);
+}
