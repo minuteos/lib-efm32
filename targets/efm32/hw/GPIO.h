@@ -13,6 +13,10 @@
 
 #include <base/base.h>
 
+#ifdef Ckernel
+#include <kernel/kernel.h>
+#endif
+
 #include <em_gpio.h>        // let EMLIB detect the actual port configuration
 
 #if defined(_SILICON_LABS_32B_SERIES_1) && !defined(_EFM32_GIANT_FAMILY)
@@ -286,6 +290,9 @@ public:
     //! Configures the GPIOPin for an alternate function, selecting from the provided lookup table
     /*! Separate ROUTEPEN (@p route) and ROUTELOC (@p locIndex) offset can be specified */
     void ConfigureAlternate(Mode mode, volatile uint32_t& routepen, uint8_t route, uint8_t locIndex, GPIOLocations_t locations) const;
+    //! Enables edge interrupt generation
+    /*! @returns the mask to the interrupt registers allocated for the pin */
+    uint32_t EnableInterrupt(bool rising, bool falling) const;
 
 #ifdef EFM32_GPIO_LINEAR_INDEX
     //! Gets the linear index of the pin (available on some MCUs)
@@ -313,6 +320,10 @@ public:
     void Set(bool state) const;
     //! Toggles the output of the GPIOPin
     void Toggle() const;
+#ifdef Ckernel
+    //! Waits for the pin to have the specified state
+    async(WaitFor, bool state, mono_t until = 0);
+#endif
 
     //! Gets the input state of the GPIOPin
     operator bool() const { return Get(); }
@@ -464,6 +475,9 @@ private:
     void ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, unsigned locOffset);
 #endif
     void ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, GPIOLocations_t locations);
+#ifdef Ckernel
+    async(WaitFor, uint32_t indexAndState, mono_t until);
+#endif
 
     friend class GPIOPin;
     friend class GPIOBlock;
@@ -472,6 +486,12 @@ private:
 //! Represents the entire GPIO peripheral
 class GPIOBlock : public GPIO_TypeDef
 {
+private:
+    uint32_t EnableInterrupt(GPIOPinID id, unsigned risingFalling);
+    void DisableInterrupt(uint32_t mask);
+
+    friend class GPIOPin;
+    friend class GPIOPort;
 };
 
 DEFINE_FLAG_ENUM(enum GPIOPin::Mode);
@@ -488,6 +508,10 @@ ALWAYS_INLINE void GPIOPin::ConfigureAlternate(Mode mode, volatile uint32_t& rou
 #ifdef EFM32_GPIO_LINEAR_INDEX
 ALWAYS_INLINE constexpr unsigned GPIOPin::GetLinearIndex(unsigned offset) const { return (Index() - offset + EFM32_GPIO_LINEAR_INDEX[GPIOPort::GetIndex(port)]) & 31; }
 ALWAYS_INLINE void GPIOPin::ConfigureAlternate(Mode mode, volatile uint32_t& routepen, uint8_t route, uint8_t locIndex, unsigned locOffset) const { port->ConfigureAlternate(GPIOPort::AltSpec(Index(), mode, route, locIndex), routepen, locOffset); }
+#endif
+ALWAYS_INLINE uint32_t GPIOPin::EnableInterrupt(bool rising, bool falling) const { return GPIO->EnableInterrupt(GetID(), (rising * 1) | (falling * 2)); }
+#ifdef Ckernel
+ALWAYS_INLINE async(GPIOPin::WaitFor, bool state, mono_t until) { return async_forward(Port().WaitFor, (state << 4) | Index(), until); }
 #endif
 
 ALWAYS_INLINE void GPIOPin::Set() const { port->DOUT |= mask; }

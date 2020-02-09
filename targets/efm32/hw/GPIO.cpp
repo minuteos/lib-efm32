@@ -145,3 +145,86 @@ void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, uns
 }
 
 #endif
+
+uint32_t GPIOBlock::EnableInterrupt(GPIOPinID id, unsigned risingFalling)
+{
+    ASSERT(id.Port() >= 0);
+    unsigned port = id.Port();
+
+    unsigned pin = id.Pin();
+    unsigned block = pin & ~3;
+
+    for (unsigned n = block; n < block + 4; n++)
+    {
+        uint32_t mask = BIT(n);
+        if (!(IEN & mask))
+        {
+            if (risingFalling & 1)
+                EXTIRISE |= mask;
+            if (risingFalling & 2)
+                EXTIFALL |= mask;
+
+            unsigned h = n >> 3;
+            unsigned offset = (n & 7) << 2;
+            MODMASK(*(&EXTIPSELL + h), 15 << offset, port << offset);
+            MODMASK(*(&EXTIPINSELL + h), 15 << offset, (pin & 3) << offset);
+            IFC = mask;
+            IEN |= mask;
+
+            auto irq = (n & 1) ? GPIO_ODD_IRQn : GPIO_EVEN_IRQn;
+            Cortex_SetIRQWakeup(irq);
+            NVIC_ClearPendingIRQ(irq);
+            NVIC_EnableIRQ(irq);
+            return mask;
+        }
+    }
+
+    DBGCL("gpio", "No free external interrupts in block %d-%d", block >> 2, (block >> 2) + 3);
+    ASSERT(0);
+    return 0;
+}
+
+void GPIOBlock::DisableInterrupt(uint32_t mask)
+{
+    if (IEN & mask)
+    {
+        IEN &= ~mask;
+        EXTIRISE &= ~mask;
+        EXTIFALL &= ~mask;
+        IFC = mask;
+        auto irq = !(__builtin_clz(mask) & 1) ? GPIO_ODD_IRQn : GPIO_EVEN_IRQn;
+        NVIC_ClearPendingIRQ(irq);
+    }
+}
+
+#ifdef Ckernel
+async(GPIOPort::WaitFor, uint32_t indexAndState, mono_t until)
+async_def(
+    uint8_t index;
+    bool state;
+    uint32_t intMask;
+)
+{
+    f.index = indexAndState & 0xF;
+    f.state = indexAndState & 0x10;
+    if (GETBIT(DIN, f.index) == f.state)
+    {
+        async_return(true);
+    }
+
+    f.intMask = GPIO->EnableInterrupt(GPIOPinID(Index(), f.index), 2 >> f.state);
+    bool result;
+    if (until)
+    {
+        result = await_mask_until(DIN, BIT(f.index), BIT(f.index) * f.state, until);
+    }
+    else
+    {
+        result = await_mask(DIN, BIT(f.index), BIT(f.index) * f.state);
+    }
+    GPIO->DisableInterrupt(f.intMask);
+    async_return(result);
+}
+async_end
+#endif
+
