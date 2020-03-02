@@ -95,6 +95,7 @@ EFM32_SYSTEM_SOURCE_PATH := $(EFM32_SDK_DEVICE)Source/$(EFM32_SYSTEM_SOURCE)
 # check for default signing and encryption keys
 GECKO_SIGN_KEY ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem)
 GECKO_SIGN_KEY_PUB ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem.pub)
+GECKO_SIGN_KEY_TOKENS_PUB ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem-tokens.txt)
 GECKO_CRYPT_KEY ?= $(wildcard $(PROJECT_ROOT)app-encrypt-key.txt)
 
 INCLUDE_DIRS += $(EFM32_DEVICE_INCLUDE) $(EFM32_CMSIS_INCLUDE) $(EFM32_EMLIB_INCLUDE) $(EFM32_BOOT_INCLUDE) $(EFM32_MBEDTLS_INCLUDE)
@@ -196,3 +197,27 @@ $(SI_STUDIO):
 	rm -rf $(SI_STUDIO_DL_TMP)
 
 endif
+
+# helper to upload keys
+
+ifneq (,$(GECKO_SIGN_KEY_TOKENS_PUB)$(GECKO_CRYPT_KEY))
+
+SI_COMMANDER_FLASH_KEYS :=
+
+ifneq (,$(GECKO_SIGN_KEY_TOKENS_PUB))
+SI_COMMANDER_FLASH_KEYS += --tokenfile $(GECKO_SIGN_KEY_TOKENS_PUB)
+endif
+
+ifneq (,$(GECKO_CRYPT_KEY))
+SI_COMMANDER_FLASH_KEYS += --tokenfile $(GECKO_CRYPT_KEY)
+endif
+
+.PHONY: flash-keys
+
+flash-keys:
+	$(SI_COMMANDER) flash --tokengroup znet $(SI_COMMANDER_FLASH_KEYS) -d $(SI_COMMANDER_DEVICE)
+
+endif
+
+GECKO_SIGN_KEY_PUB ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem.pub)
+GECKO_CRYPT_KEY ?= $(wildcard $(PROJECT_ROOT)app-encrypt-key.txt)
