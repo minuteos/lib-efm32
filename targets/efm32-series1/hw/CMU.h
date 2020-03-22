@@ -127,6 +127,12 @@ public:
     void DisableADC(unsigned index) { ASSERT(index < ADC_COUNT); EFM32_BITCLR(HFPERCLKEN0, CMU_HFPERCLKEN0_ADC0 << index); }
 #endif
 
+#ifdef CMU_HFPERCLKEN0_ACMP0
+    bool ACMPEnabled(unsigned index) { ASSERT(index < ACMP_COUNT); return HFPERCLKEN0 & (CMU_HFPERCLKEN0_ACMP0 << index); }
+    void EnableACMP(unsigned index) { ASSERT(index < ACMP_COUNT); EFM32_BITSET(HFPERCLKEN0, CMU_HFPERCLKEN0_ACMP0 << index); }
+    void DisableACMP(unsigned index) { ASSERT(index < ACMP_COUNT); EFM32_BITCLR(HFPERCLKEN0, CMU_HFPERCLKEN0_ACMP0 << index); }
+#endif
+
 #ifdef CMU_HFPERCLKEN0_CRYOTIMER
     bool CRYOTIMEREnabled() { return HFPERCLKEN0 & CMU_HFPERCLKEN0_CRYOTIMER; }
     void EnableCRYOTIMER() { EnableLE(); HFPERCLKEN0 |= CMU_HFPERCLKEN0_CRYOTIMER; }
