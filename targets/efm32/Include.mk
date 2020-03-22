@@ -61,7 +61,7 @@ endif
 ifeq (,$(EFM32_SDK_VERSION))
   EFM32_SDK_VERSION ?= $(lastword $(sort $(filter-out Simplicity,$(notdir $(wildcard $(EFM32_SDKS)/*)))))
   ifeq (,$(EFM32_SDK_VERSION))
-	EFM32_SDK_VERSION = v2.7
+    EFM32_SDK_VERSION = v2.7
     $(warning EFM32_SDK_VERSION not specified explicitly, using recommended version: $(EFM32_SDK_VERSION))
   else
     $(warning EFM32_SDK_VERSION not specified explicitly, using latest available version: $(EFM32_SDK_VERSION))
