@@ -69,6 +69,9 @@ public:
     uint32_t Time() { return CNT + TimeOffset(); }
     //! Sets the real time
     void SetTime(uint32_t time) { TimeOffset() = time - CNT; }
+    //! Configures the specified channel for input capture
+    void SetupCapture(unsigned channel, unsigned prsChannel, ChannelFlags flags)
+        { ASSERT(channel < countof(CC)); CC[channel].CTRL = flags | ChannelModeCapture | ChannelFlags(prsChannel << ChannelPRSOffset); }
     //! Reads the captured value for the specified channel and clears the corresponding interrupt
     uint32_t ReadCaptured(unsigned channel) { IFC = RTCC_IFC_CC0 << channel; return CC[channel].CCV; }
 
@@ -92,3 +95,4 @@ private:
 };
 
 DEFINE_FLAG_ENUM(_RTCC::Flags);
+DEFINE_FLAG_ENUM(_RTCC::ChannelFlags);
