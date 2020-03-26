@@ -9,6 +9,8 @@
 #include <hw/RTCC.h>
 #include <hw/SCB.h>
 
+#include <kernel/kernel.h>
+
 void _RTCC::Configure()
 {
     bool init = !CMU->RTCCEnabled();
@@ -42,3 +44,22 @@ void _RTCC::SetupWake(mono_t atTicks)
         SCB->TriggerWake(RTCC_IRQn);
     }
 }
+
+#ifdef Ckernel
+
+async(_RTCC::WaitFor, unsigned channel)
+async_def()
+{
+    if (!InterruptActive(channel))
+    {
+        // first call
+        InterruptEnable(channel);
+        await_mask(IF, RTCC_IF_CC0 << channel, RTCC_IF_CC0 << channel);
+        InterruptDisable(channel);
+    }
+
+    InterruptClear(channel);
+}
+async_end
+
+#endif

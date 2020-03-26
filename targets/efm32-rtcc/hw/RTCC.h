@@ -12,6 +12,10 @@
 
 #include <base/base.h>
 
+#ifdef Ckernel
+#include <kernel/async.h>
+#endif
+
 #include <hw/CMU.h>
 
 #undef RTCC
@@ -65,6 +69,8 @@ public:
     uint32_t Time() { return CNT + TimeOffset(); }
     //! Sets the real time
     void SetTime(uint32_t time) { TimeOffset() = time - CNT; }
+    //! Reads the captured value for the specified channel and clears the corresponding interrupt
+    uint32_t ReadCaptured(unsigned channel) { IFC = RTCC_IFC_CC0 << channel; return CC[channel].CCV; }
 
     void SetupWake(uint32_t at);
     void DisableWake() { InterruptDisable(WakeChannel); }
@@ -73,6 +79,10 @@ public:
     void InterruptDisable(unsigned channel) { IEN &= ~(RTCC_IEN_CC0 << channel); }
     void InterruptClear(unsigned channel) { IFC = RTCC_IEN_CC0 << channel; }
     bool InterruptActive(unsigned channel) { return IF & (RTCC_IEN_CC0 << channel); }
+
+#ifdef Ckernel
+    async(WaitFor, unsigned channel);
+#endif
 
 private:
     // RTC must not be configured by application
