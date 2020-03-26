@@ -10,6 +10,7 @@
 
 #define CORTEX_STARTUP_HARDWARE_INIT	_efm32_startup
 #define CORTEX_STARTUP_BEFORE_C_INIT	_efm32_c_startup
+#define PLATFORM_WATCHDOG_HIT           _efm32_hit_watchdog
 
 #define EFM32_AUXHFRCO_FREQUENCY    16000000
 
@@ -17,7 +18,13 @@
 #define SWV_BAUD_RATE   1000000
 #endif
 
+#ifndef EFM32_WATCHDOG_TIMEOUT
+#define EFM32_WATCHDOG_TIMEOUT  100
+#endif
+
+
 #include_next <base/platform.h>
 
 extern void _efm32_startup();
 extern void _efm32_c_startup();
+extern void _efm32_hit_watchdog();

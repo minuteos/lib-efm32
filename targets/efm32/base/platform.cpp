@@ -10,6 +10,7 @@
 
 #include <em_chip.h>
 
+#include <hw/WDOG.h>
 #include <hw/CMU.h>
 #include <hw/EMU.h>
 #include <hw/GPIO.h>
@@ -57,6 +58,9 @@ void _efm32_startup()
 
 void _efm32_c_startup()
 {
+    // configure watchdog for a long timeout (for clocks init)
+    WDOG0->Configure(2000);
+
     // use the "clear interrupts on read" semantics (reading IFC is the same as IFC = IF)
     // also enable bus faults when accessing disabled peripherals
     // silently ignoring these errors sometimes causes very hard to find bugs
@@ -68,10 +72,23 @@ void _efm32_c_startup()
     EMU->Configure();
     CMU->Configure();
 
+    PLATFORM_WATCHDOG_HIT();
+#if defined(EFM32_WATCHDOG_TIMEOUT) && EFM32_WATCHDOG_TIMEOUT > 0
+    // lock watchdog configuration with configured timeout
+    WDOG0->Configure(EFM32_WATCHDOG_TIMEOUT, true);
+#else
+    WDOG0->Disable();
+#endif
+
 #ifdef EFM32_RTC
     // start RTC as soon as possible
     EFM32_RTC->Configure();
 #endif
+}
+
+void _efm32_hit_watchdog()
+{
+    WDOG0->Hit();
 }
 
 #if GECKO_SIGNATURE
