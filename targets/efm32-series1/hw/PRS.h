@@ -30,8 +30,8 @@ public:
         SourcePRS8 = PRS_CH_CTRL_SOURCESEL_PRSH | PRS_CH_CTRL_SIGSEL_PRSCH8,
         SourcePRS9, SourcePRS10, SourcePRS11,
 
-        SourceADCMP0 = PRS_CH_CTRL_SOURCESEL_ACMP0 | PRS_CH_CTRL_SIGSEL_ACMP0OUT,
-        SourceADCMP1 = PRS_CH_CTRL_SOURCESEL_ACMP1 | PRS_CH_CTRL_SIGSEL_ACMP1OUT,
+        SourceACMP0 = PRS_CH_CTRL_SOURCESEL_ACMP0 | PRS_CH_CTRL_SIGSEL_ACMP0OUT,
+        SourceACMP1 = PRS_CH_CTRL_SOURCESEL_ACMP1 | PRS_CH_CTRL_SIGSEL_ACMP1OUT,
 
         SourceADC0_Single = PRS_CH_CTRL_SOURCESEL_ADC0 | PRS_CH_CTRL_SIGSEL_ADC0SINGLE,
         SourceADC0_Scan = PRS_CH_CTRL_SOURCESEL_ADC0 | PRS_CH_CTRL_SIGSEL_ADC0SCAN,
@@ -100,6 +100,8 @@ public:
 
         Async = PRS_CH_CTRL_ASYNC,
     };
+
+    DECLARE_FLAG_ENUM(Flags);
 
     ALWAYS_INLINE unsigned Index() const { return ((unsigned)this & 0x3F) >> 2; }
     ALWAYS_INLINE void Setup(Flags flags) { CTRL = flags; }
@@ -219,6 +221,8 @@ public:
     PRSChannel& Channel(unsigned n) const { return *(PRSChannel*)&CH[n]; }
     //! Gets the channel with the specified flags or allocates a new one
     PRSChannelHandle GetChannel(PRSChannel::Flags flags);
+    //! Gets the specified ACMP channel with the specified flags or allocates a new one
+    PRSChannelHandle GetACMPChannel(unsigned index, PRSChannel::Flags flags) { ASSERT(index < ACMP_COUNT); return GetChannel(flags | PRSChannel::Flags(PRSChannel::SourceACMP0 + index)); }
     //! Generates a pulse on the specified channel
     void PulseChannel(unsigned n) { SWPULSE = BIT(n); }
 
