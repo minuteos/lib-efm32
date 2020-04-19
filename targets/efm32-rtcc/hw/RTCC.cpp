@@ -26,7 +26,7 @@ void _RTCC::Configure()
         memset(RET, 0, sizeof(RET));
     }
 
-    DBGCL("RTCC", "COMBCNT: %X, CNT: %d, RESC: %08X", Ticks(), CNT, Time(), RMU->RSTCAUSE);
+    DBGCL("RTCC", "COMBCNT: %X, CNT: %d, RESC: %08X", Ticks(), CNT, RMU->RSTCAUSE);
 }
 
 void _RTCC::SetupWake(mono_t atTicks)
