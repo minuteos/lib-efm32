@@ -73,6 +73,7 @@ void _efm32_c_startup()
     CMU->Configure();
 
     PLATFORM_WATCHDOG_HIT();
+    WDOG0->Sync();
 #if defined(EFM32_WATCHDOG_TIMEOUT) && EFM32_WATCHDOG_TIMEOUT > 0
     // lock watchdog configuration with configured timeout
     WDOG0->Configure(EFM32_WATCHDOG_TIMEOUT, true);

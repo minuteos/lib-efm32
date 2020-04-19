@@ -33,6 +33,8 @@ public:
     }
     //! Disable watchdog
     void Disable() { CTRL = 0; }
+    //! Sync pending commands
+    void Sync() { while (SYNCBUSY); }
 
     //! Hit watchdog, safe to call repeatedly
     ALWAYS_INLINE void Hit()
