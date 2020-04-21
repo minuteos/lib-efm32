@@ -34,8 +34,6 @@
     24 - 0, /* PF0  (24) - PF7  (31) */ \
 })
 
-#define EFM32_GPIO_APORT_AVAILABLE  1
-
 #endif
 
 #ifdef _GPIO_P_CTRL_SLEWRATE_MASK
@@ -169,13 +167,6 @@ public:
     //! Checks if this is a valid GPIO pin
     constexpr operator bool() const { return IsValid(); }
 
-#if EFM32_GPIO_APORT_AVAILABLE
-    //! Gets the APORTX channel for this pin
-    ALWAYS_INLINE constexpr APORT APORTX() const { return index + APORTOffset() + (index & 1) * 32; }
-    //! Gets the APORTY channel for this pin
-    ALWAYS_INLINE constexpr APORT APORTY() const { return index + APORTOffset() + !(index & 1) * 32; }
-#endif
-
 private:
 #ifdef EFM32_GPIO_LINEAR_INDEX
     //! APORT mapping for EFM32 Series 1 PINs
@@ -191,6 +182,33 @@ private:
         }
         return 0;
     }
+
+#define EFM32_GPIO_APORT_AVAILABLE  1
+
+#elif defined(_SILICON_LABS_32B_SERIES_1) && defined(_EFM32_GIANT_FAMILY)
+    //! APORT mapping for EFM32GG11 pins
+    ALWAYS_INLINE constexpr int APORTOffset() const
+    {
+        switch (port)
+        {
+            case 1: return 32 + 0;  // PORT A = APORT1/2 CH0-15 for PA0-PA15 (+0)
+            case 2: return 32 + 16; // PORT B = APORT1/2 CH16-CH31 for PB0-PB15 (+16)
+            case 5: return 96 + 0;  // PORT E = APORT3/4 CH0-15 for PE0-PE15 (+0)
+            case 6: return 96 + 16; // PORT F = APORT3/4 CH16-31 for PF0-PF15 (+16)
+        }
+        return 0;
+    }
+
+#define EFM32_GPIO_APORT_AVAILABLE  1
+
+#endif
+
+public:
+#if EFM32_GPIO_APORT_AVAILABLE
+    //! Gets the APORTX channel for this pin
+    ALWAYS_INLINE constexpr APORT APORTX() const { return index + APORTOffset() + (index & 1) * 32; }
+    //! Gets the APORTY channel for this pin
+    ALWAYS_INLINE constexpr APORT APORTY() const { return index + APORTOffset() + !(index & 1) * 32; }
 #endif
 };
 
@@ -525,8 +543,10 @@ class APORTX : public APORT
 public:
     constexpr APORTX(Fixed f) : APORT(f) {}
     constexpr APORTX(APORT other) : APORT(other) {}
+#if EFM32_GPIO_APORT_AVAILABLE
     constexpr APORTX(const GPIOPin& pin) : APORT(pin.GetID().APORTX()){}
     ALWAYS_INLINE constexpr APORTX(const GPIOPinID pin) : APORT(pin.APORTX()) {}
+#endif
 };
 
 class APORTY : public APORT
@@ -534,6 +554,8 @@ class APORTY : public APORT
 public:
     constexpr APORTY(Fixed f) : APORT(f) {}
     constexpr APORTY(APORT other) : APORT(other) {}
+#if EFM32_GPIO_APORT_AVAILABLE
     constexpr APORTY(const GPIOPin& pin) : APORT(pin.GetID().APORTY()) {}
     ALWAYS_INLINE constexpr APORTY(const GPIOPinID pin) : APORT(pin.APORTY()) {}
+#endif
 };
