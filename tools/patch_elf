@@ -33,6 +33,12 @@ while read idx name size vma lma off algn; do
     # skip lines without index
     if [[ ! $idx =~ ^-?[0-9]+$ ]]; then continue; fi
 
+    # read the line that follows
+    read flags
+
+    # skip sections without contents
+    if [[ ! $flags =~ CONTENTS ]]; then continue; fi
+
     SEC_SIZE=$((0x$size))
 
     # skip sections with zero size or LMA
