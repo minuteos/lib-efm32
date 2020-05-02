@@ -251,6 +251,8 @@ public:
     bool BindCs(GPIOPin pin) { return BindCs(GetCsLocation(pin)); }
     //! Attempts to bind to the CS pin at the specified location; returns false if CS is already bound
     bool BindCs(unsigned loc);
+    //! Attempts to bind to the specified CS pin; returns false if CS is already bound
+    async(BindCs, unsigned loc, mono_t timeout = ASYNC_NO_TIMEOUT);
     //! Releases the currently bound CS pin
     void ReleaseCs() { ROUTEPEN &= ~USART_ROUTEPEN_CSPEN; }
 

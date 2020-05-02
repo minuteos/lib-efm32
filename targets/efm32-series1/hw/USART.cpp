@@ -63,6 +63,9 @@ const GPIOLocations_t USART::locsCs[] = {
 
 #endif
 
+const uint8_t USART::SyncTransferDescriptor::s_zero = 0;
+uint8_t USART::SyncTransferDescriptor::s_discard;
+
 bool USART::BindCs(unsigned loc)
 {
     if (ROUTEPEN & USART_ROUTEPEN_CSPEN)
@@ -74,6 +77,20 @@ bool USART::BindCs(unsigned loc)
     ROUTEPEN |= USART_ROUTEPEN_CSPEN;
     return true;
 }
+
+async(USART::BindCs, unsigned loc, mono_t timeout)
+async_def()
+{
+    if (!await_mask_ticks(ROUTEPEN, USART_ROUTEPEN_CSPEN, 0, timeout))
+    {
+        async_return(false);
+    }
+
+    MODMASK(ROUTELOC0, _USART_ROUTELOC0_CSLOC_MASK, loc << _USART_ROUTELOC0_CSLOC_SHIFT);
+    ROUTEPEN |= USART_ROUTEPEN_CSPEN;
+    async_return(true);
+}
+async_end
 
 LDMAChannelHandle USART::BeginSyncBidirectionalTransfer(Buffer buffer)
 {
