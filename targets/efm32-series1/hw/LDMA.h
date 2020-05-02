@@ -22,6 +22,7 @@ public:
     enum FixedValue
     {
         None = 0,
+        Self = 3,
         Next = 0x13,
         Previous = 0xFFFFFFF3,
     };
@@ -169,33 +170,33 @@ public:
     }
 
     //! Checks if the descriptor specified a memory transfer operation
-    ALWAYS_INLINE bool IsTransfer() const { return (CTRL & _LDMA_CH_CTRL_STRUCTTYPE_MASK) == TypeTransfer; }
+    ALWAYS_INLINE bool IsTransfer() volatile const { return (CTRL & _LDMA_CH_CTRL_STRUCTTYPE_MASK) == TypeTransfer; }
     //! Checks if the descriptor specified an immediate write operation
-    ALWAYS_INLINE bool IsImmediate() const { return (CTRL & _LDMA_CH_CTRL_STRUCTTYPE_MASK) == TypeImmediate; }
+    ALWAYS_INLINE bool IsImmediate() volatile const { return (CTRL & _LDMA_CH_CTRL_STRUCTTYPE_MASK) == TypeImmediate; }
     //! Checks if the descriptor specified a synchronization operation
-    ALWAYS_INLINE bool IsSync() const { return (CTRL & _LDMA_CH_CTRL_STRUCTTYPE_MASK) == TypeSync; }
+    ALWAYS_INLINE bool IsSync() volatile const { return (CTRL & _LDMA_CH_CTRL_STRUCTTYPE_MASK) == TypeSync; }
 
     //! Gets the source address of the transfer
-    ALWAYS_INLINE volatile const void* Source() const { return (const volatile void*)SRC; }
+    ALWAYS_INLINE const void* Source() volatile const { return (const void*)SRC; }
     //! Sets the source address of the transfer
-    ALWAYS_INLINE void Source(volatile const void* ptr) { SRC = (uint32_t)ptr; }
+    ALWAYS_INLINE void Source(const volatile void* ptr) volatile { SRC = (uint32_t)ptr; }
     //! Gets the destination address of the transfer
-    ALWAYS_INLINE volatile void* Destination() const { return (volatile void*)DST; }
+    ALWAYS_INLINE void* Destination() volatile const { return (void*)DST; }
     //! Sets the destination address of the transfer
-    ALWAYS_INLINE void Destination(volatile void* ptr) { DST = (uint32_t)ptr; }
+    ALWAYS_INLINE void Destination(volatile void* ptr) volatile { DST = (uint32_t)ptr; }
     //! Gets the number of units transfered (depends on Flags)
-    ALWAYS_INLINE size_t Count() const { return ((CTRL & _LDMA_CH_CTRL_XFERCNT_MASK) >> _LDMA_CH_CTRL_XFERCNT_SHIFT) + 1; }
+    ALWAYS_INLINE size_t Count() volatile const { return ((CTRL & _LDMA_CH_CTRL_XFERCNT_MASK) >> _LDMA_CH_CTRL_XFERCNT_SHIFT) + 1; }
     //! Sets the number of units transfered (depends on Flags)
-    ALWAYS_INLINE void Count(size_t val) { MODMASK_SAFE(CTRL, _LDMA_CH_CTRL_XFERCNT_MASK, (val - 1) << _LDMA_CH_CTRL_XFERCNT_SHIFT); }
+    ALWAYS_INLINE void Count(size_t val) volatile { MODMASK_SAFE(CTRL, _LDMA_CH_CTRL_XFERCNT_MASK, (val - 1) << _LDMA_CH_CTRL_XFERCNT_SHIFT); }
     //! Sets the linked descriptor to be used after this one completes
-    ALWAYS_INLINE void Link(LDMALink link) { LINK = link.value; }
+    ALWAYS_INLINE void Link(LDMALink link) volatile { LINK = link.value; }
 
     //! Gets the LDMAChannel to which this descriptor belongs
     //! @warning Can be used only on the primary descriptor obtained from an LDMAChannel
-    ALWAYS_INLINE class LDMAChannel& Channel() { class LDMAChannel* ch = (LDMAChannel*)((uintptr_t)this - offsetof(LDMA_CH_TypeDef, CTRL)); return *ch; }
+    ALWAYS_INLINE class LDMAChannel& Channel() volatile const { class LDMAChannel* ch = (LDMAChannel*)((uintptr_t)this - offsetof(LDMA_CH_TypeDef, CTRL)); return *ch; }
     //! Gets the LDMAChannelHandle of the channel to which this descriptor belongs
     //! @warning Can be used only on the primary descriptor obtained from an LDMAChannel
-    class LDMAChannelHandle ChannelHandle();
+    class LDMAChannelHandle ChannelHandle() volatile const;
 
     friend class LDMAChannelHandle;
 };
@@ -397,7 +398,7 @@ public:
     //! Specified the number of loops for looping descriptors on the LDMAChannel represented by this handle
     ALWAYS_INLINE void Loop(uint32_t count) { Channel().LOOP = count; }
     //! Retrieves the primary LDMADescriptor of the LDMAChannel represented by this handle
-    ALWAYS_INLINE LDMADescriptor& RootDescriptor() { return Channel().Descriptor(); }
+    ALWAYS_INLINE volatile LDMADescriptor& RootDescriptor() { return Channel().Descriptor(); }
     //! Waits for the DONE interrupt flag to be set on the LDMAChannel represented by this handle
     //! @note this flag is set by transfers having the Flags::SetDone flag, not when a transfer simply completes
     async(WaitForDoneFlag);
@@ -499,6 +500,6 @@ ALWAYS_INLINE bool LDMAChannelHandle::RequestsDisabled() const { return !GETBIT(
 
 ALWAYS_INLINE bool LDMAChannelHandle::RequestsPending() const { return GETBIT(LDMA->REQPEND, index); }
 
-ALWAYS_INLINE LDMAChannelHandle LDMADescriptor::ChannelHandle() { return ((uintptr_t)this - (uintptr_t)LDMA->CH) / sizeof(LDMA_CH_TypeDef); }
+ALWAYS_INLINE LDMAChannelHandle LDMADescriptor::ChannelHandle() volatile const { return ((uintptr_t)this - (uintptr_t)LDMA->CH) / sizeof(LDMA_CH_TypeDef); }
 
 ALWAYS_INLINE async(LDMAChannelHandle::WaitForDoneFlag) { return async_forward(LDMA->WaitForDoneMask, BIT(index)); }
