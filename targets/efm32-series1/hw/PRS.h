@@ -117,6 +117,7 @@ private:
     unsigned index;
 
 public:
+    constexpr PRSChannelHandle() : index(~0u) {}
     constexpr operator unsigned() const { return index; }
 
     ALWAYS_INLINE unsigned Index() const { return index; }
