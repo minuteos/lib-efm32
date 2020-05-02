@@ -122,6 +122,7 @@ public:
     void InterruptDisable() { IEN = 0; }
     void InterruptClear() { IFC = ~0u; }
     uint32_t InterruptRead() { return IFC; }
+    async(WaitForEdge, mono_t timeout = ASYNC_NO_TIMEOUT);
 
     ALWAYS_INLINE IRQn_Type IRQn() const { ASSERT(Index() == 0); return ACMP0_IRQn; }
     void IRQEnable() { NVIC_EnableIRQ(IRQn()); }

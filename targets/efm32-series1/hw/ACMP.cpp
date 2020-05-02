@@ -7,6 +7,7 @@
  */
 
 #include <hw/ACMP.h>
+#include <hw/SCB.h>
 
 res_pair_t ACMP::CalculateHysteresis(uint32_t mv)
 {
@@ -92,3 +93,15 @@ found:
     return RES_PAIR(ref, div << 16 | div << 24);
 #endif
 }
+
+async(ACMP::WaitForEdge, mono_t timeout)
+async_def()
+{
+    InterruptEnable();
+    Cortex_SetIRQWakeup(IRQn());
+    SCB->EnableWake(IRQn());
+    bool res = await_mask_ticks(IFC, ACMP_IFC_EDGE, ACMP_IFC_EDGE, timeout);
+    InterruptDisable();
+    async_return(res);
+}
+async_end
