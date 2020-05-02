@@ -8,5 +8,10 @@
  * Placeholder to be overriden by the main project
  */
 
+#ifndef EFM32_GPIO_ALT_DRIVE
 #define EFM32_GPIO_ALT_DRIVE  EFM32_GPIO_DRIVE_WEAK(EFM32_GPIO_SLEW_DEFAULT)
+#endif
+
+#ifndef EFM32_GPIO_DRIVE
 #define EFM32_GPIO_DRIVE      EFM32_GPIO_DRIVE_STRONG(EFM32_GPIO_SLEW_DEFAULT)
+#endif
