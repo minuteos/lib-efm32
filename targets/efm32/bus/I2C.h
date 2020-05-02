@@ -15,6 +15,25 @@
 namespace bus
 {
 
-typedef ::I2C I2C;
+class I2C
+{
+    ::I2C& i2c;
+
+public:
+    constexpr I2C(::I2C& i2c)
+        : i2c(i2c) {}
+    constexpr I2C(::I2C* i2c)
+        : i2c(*i2c) {}
+
+    //! Starts or restarts a read transaction, reading the specified number of bytes from the bus
+    async(Read, uint8_t address, Buffer data, bool start, bool stop) { return async_forward(i2c.Read, address, data, start, stop); }
+    //! Continues a read transaction, reading the specified number of bytes from the bus
+    async(Read, Buffer data, bool stop) { return async_forward(i2c.Read, data, stop); }
+
+    //! Starts or restarts a write transaction, writing the specified number of bytes to the bus
+    async(Write, uint8_t address, Span data, bool start, bool stop) { return async_forward(i2c.Write, address, data, start, stop); }
+    //! Continues a write transaction, writing the specified number of bytes to the bus
+    async(Write, Span data, bool stop) { return async_forward(i2c.Write, data, stop); }
+};
 
 }
