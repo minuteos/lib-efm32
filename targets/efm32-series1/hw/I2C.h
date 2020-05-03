@@ -173,33 +173,52 @@ public:
     async(Reset);
 
     //! Starts or restarts a read transaction, reading the specified number of bytes from the bus
-    async(Read, uint8_t address, Buffer data, bool start, bool stop) { return async_forward(_Read, ((address & MASK(7)) << 1) | TxFlagRead | (start * TxFlagStart) | (stop * TxFlagStop), data); }
+    async(Read, uint8_t address, Buffer data, bool start, bool stop) { return async_forward(_Read, Operation(address, true, start, stop, data.Length()), data.Pointer()); }
     //! Continues a read transaction, reading the specified number of bytes from the bus
-    async(Read, Buffer data, bool stop) { return async_forward(_Read, TxFlagNoAddress | TxFlagRead | (stop * TxFlagStop), data); }
+    async(Read, Buffer data, bool stop) { return async_forward(_Read, Operation(true, stop, data.Length()), data.Pointer()); }
 
     //! Starts or restarts a write transaction, writing the specified number of bytes to the bus
-    async(Write, uint8_t address, Span data, bool start, bool stop) { return async_forward(_Write, ((address & MASK(7)) << 1) | (start * TxFlagStart) | (stop * TxFlagStop), data); }
+    async(Write, uint8_t address, Span data, bool start, bool stop) { return async_forward(_Write, Operation(address, false, start, stop, data.Length()), data.Pointer()); }
     //! Continues a write transaction, writing the specified number of bytes to the bus
-    async(Write, Span data, bool stop) { return async_forward(_Write, TxFlagNoAddress | (stop * TxFlagStop), data); }
+    async(Write, Span data, bool stop) { return async_forward(_Write, Operation(false, stop, data.Length()), data.Pointer()); }
 
 private:
-    enum TxFlags
-    {
-        TxFlagRead = BIT(0),
-        TxFlagStart = BIT(8),
-        TxFlagStop = BIT(9),
-        TxFlagNoAddress = BIT(10),
-    };
-
     enum InterruptFlags
     {
         AwaitFlagsNoAck = I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_RXDATAV | I2C_IF_MSTOP,
         AwaitFlags = AwaitFlagsNoAck | I2C_IF_ACK | I2C_IF_NACK,
     };
 
-    async(_Address, uint32_t addressAndFlags);
-    async(_Read, uint32_t addressAndFlags, Buffer data);
-    async(_Write, uint32_t addressAndFlags, Span data);
+    union Operation
+    {
+        constexpr Operation(uint8_t address, bool read, bool start, bool stop, uint16_t length)
+            : value(address << 25 | read * BIT(24) | stop * BIT(17) | start * BIT(16) | length) {}
+        constexpr Operation(bool read, bool stop, uint16_t length)
+            : value(read << 24 | BIT(18) | stop * BIT(17) | length) {}
+
+        uint32_t value;
+        struct
+        {
+            uint16_t length;
+            bool start : 1;
+            bool stop : 1;
+            bool noAddress : 1;
+            uint8_t : 5;
+            union
+            {
+                struct
+                {
+                    bool read : 1;
+                    uint8_t address : 7;
+                };
+                uint8_t fullAddress;
+            };
+        };
+    };
+
+    async(_Address, Operation op);
+    async(_Read, Operation op, char* data);
+    async(_Write, Operation op, const char* data);
 
     void TransactionInit();
     void TransactionCleanup();

@@ -90,10 +90,10 @@ void I2C::TransactionCleanup()
     PLATFORM_DEEP_SLEEP_ENABLE();
 }
 
-async(I2C::_Address, uint32_t addressAndFlags)
+async(I2C::_Address, Operation op)
 async_def()
 {
-    if (addressAndFlags & TxFlagStart)
+    if (op.start)
     {
         // start a new transaction, acquire the lock first
         await_acquire(s_locks, BIT(Index()));
@@ -105,7 +105,7 @@ async_def()
     auto state = State();
     auto flags = ClearFlags();
 
-    if (addressAndFlags & TxFlagNoAddress)
+    if (op.noAddress)
     {
         // just verify the state
         if (state != BusAddrAck && state != BusDataAck)
@@ -115,7 +115,7 @@ async_def()
         }
         async_return(true);
     }
-    else if (addressAndFlags & TxFlagStart)
+    else if (op.start)
     {
         // wait for bus to become idle from previous operation
         IEN = AwaitFlags;
@@ -130,8 +130,8 @@ async_def()
         Abort();
         flags = ClearFlags();
 
-        DIAG("START >> %c %02X", addressAndFlags & TxFlagRead ? 'R' : 'W', (addressAndFlags >> 1) & MASK(7));
-        Send(addressAndFlags & MASK(8));
+        DIAG("START >> %c %02X", op.read ? 'R' : 'W', op.address);
+        Send(op.fullAddress);
         Start();
     }
     else
@@ -142,9 +142,9 @@ async_def()
             async_return(false);
         }
 
-        DIAG("REP-START >> %c %02X", addressAndFlags & TxFlagRead ? 'R' : 'W', (addressAndFlags >> 1) & MASK(7));
+        DIAG("REP-START >> %c %02X", op.read ? 'R' : 'W', op.address);
         Start();
-        Send(addressAndFlags & MASK(8));
+        Send(op.fullAddress);
     }
 
     for (;;)
@@ -181,15 +181,15 @@ async_def()
 }
 async_end
 
-async(I2C::_Read, uint32_t addressAndFlags, Buffer data)
+async(I2C::_Read, Operation op, char* data)
 async_def(uint32_t wx)
 {
-    if (!await(_Address, addressAndFlags))
+    if (!await(_Address, op))
     {
         goto fail;
     }
 
-    for (f.wx = 0; f.wx < data.Length(); f.wx++)
+    for (f.wx = 0; f.wx < op.length; f.wx++)
     {
         bool timeout = !await_mask_not_ms(IF, IEN = AwaitFlagsNoAck, 0, I2C_TIMEOUT);	// don't care about ACK or NAK
         auto flags = ClearFlags();
@@ -209,7 +209,7 @@ async_def(uint32_t wx)
         else if (flags.dataValid)
         {
             data[f.wx] = Receive();
-            if (f.wx + 1 == data.Length())
+            if (f.wx + 1 == op.length)
             {
                 DIAG("%02X >NAK", data[f.wx]);
                 NACK();
@@ -226,7 +226,7 @@ async_def(uint32_t wx)
         }
     }
 
-    if (f.wx != data.Length() || (addressAndFlags & TxFlagStop))
+    if (f.wx != op.length || op.stop)
     {
 fail:
         DIAG("STOP");
@@ -238,15 +238,15 @@ fail:
 }
 async_end
 
-async(I2C::_Write, uint32_t addressAndFlags, Span data)
+async(I2C::_Write, Operation op, const char* data)
 async_def(uint32_t wx)
 {
-    if (!await(_Address, addressAndFlags))
+    if (!await(_Address, op))
     {
         goto fail;
     }
 
-    for (f.wx = 0; f.wx < data.Length(); f.wx++)
+    for (f.wx = 0; f.wx < op.length; f.wx++)
     {
         DIAG(">> %02X (Data %d)", data[f.wx], f.wx);
         Send(data[f.wx]);
@@ -286,7 +286,7 @@ async_def(uint32_t wx)
     }
 
 success:
-    if (f.wx != data.Length() || (addressAndFlags & TxFlagStop))
+    if (f.wx != op.length || op.stop)
     {
 fail:
         if (BusHeld())
