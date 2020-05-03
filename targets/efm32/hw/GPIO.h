@@ -470,6 +470,11 @@ public:
     const volatile uint32_t* InputPtr() { return &DIN; }
     volatile uint32_t* OutputPtr() { return &DOUT; }
 
+    //! Suppress trace messages when reconfiguring pins
+    static void SuppressConfigTrace() { _Trace(1); }
+    //! Restore trace messages when reconfiguring pins
+    static void RestoreConfigTrace() { _Trace(-1); }
+
 private:
     struct AltSpec
     {
@@ -495,6 +500,12 @@ private:
     void ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, GPIOLocations_t locations);
 #ifdef Ckernel
     async(WaitFor, uint32_t indexAndState, mono_t timeout = 0);
+#endif
+
+#if TRACE
+    static bool _Trace(int n = 0) { static int noTrace = 0; return !(noTrace += n); }
+#else
+    static constexpr bool _Trace(int n = 0) { return false; }
 #endif
 
     friend class GPIOPin;

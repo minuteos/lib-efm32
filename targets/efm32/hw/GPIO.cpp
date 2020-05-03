@@ -52,8 +52,9 @@ void GPIOPort::Configure(uint32_t mask, GPIOPin::Mode mode)
 #endif
 
     unsigned modeNum = mode & GPIOPin::ModeMask;
+    bool trace = _Trace();
 
-    DBGC("gpio", "Configuring port %s (mode %d", GPIOPin(this, mask).Name(), modeNum);
+    if (trace) DBGC("gpio", "Configuring port %s (mode %d", GPIOPin(this, mask).Name(), modeNum);
 
     if (mode & GPIOPin::FlagAltDrive)
     {
@@ -63,7 +64,7 @@ void GPIOPort::Configure(uint32_t mask, GPIOPin::Mode mode)
         else
             modeNum |= 4;	// 8-11 -> 12-15
 
-        _DBG(" + alt");
+        if (trace) _DBG(" + alt");
     }
 
     if (mode & GPIOPin::FlagFilter)
@@ -72,7 +73,7 @@ void GPIOPort::Configure(uint32_t mask, GPIOPin::Mode mode)
         {
             // special case, Input mode enables filter by setting DOUT
             DOUT |= mask;
-            _DBG(", filter");
+            if (trace) _DBG(", filter");
             goto filter_set;
         }
         else
@@ -80,18 +81,18 @@ void GPIOPort::Configure(uint32_t mask, GPIOPin::Mode mode)
             ASSERT(GETBIT(0x5504, modeNum));	// modes that can have glitch filter enabled - 2, 8, 10, 12, 14
             modeNum++;
         }
-        _DBG(" + filter");
+        if (trace) _DBG(" + filter");
     }
 
     if (mode & (GPIOPin::FlagAltDrive | GPIOPin::FlagFilter))
     {
-        _DBG(" = %d", modeNum);
+        if (trace) _DBG(" = %d", modeNum);
     }
 
     if (mode & GPIOPin::FlagSet)
     {
         DOUT |= mask;
-        _DBG(", set");
+        if (trace) _DBG(", set");
     }
     else
     {
@@ -102,7 +103,7 @@ filter_set:
     if (mode & GPIOPin::FlagNoOvervoltage)
     {
         OVTDIS |= mask;
-        _DBG(", no overvoltage");
+        if (trace) _DBG(", no overvoltage");
     }
     else
     {
@@ -110,7 +111,7 @@ filter_set:
     }
 #endif
 
-    _DBG(")\n");
+    if (trace) _DBG(")\n");
 
     do
     {
@@ -135,7 +136,7 @@ void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, uns
 
     CMU->EnableGPIO();
 
-    DBG("gpio: Routing port %c%d to peripheral %08X route %d location %d\n", 'A' + Index(), spec.pin, ((uint)&routepen) & ~(MASK(10)), spec.loc, n);
+    if (_Trace()) DBG("gpio: Routing port %c%d to peripheral %08X route %d location %d\n", 'A' + Index(), spec.pin, ((uint)&routepen) & ~(MASK(10)), spec.loc, n);
 
     volatile uint32_t* ploc = &routepen + 1 + (spec.loc >> 2);
     unsigned loc = (spec.loc & 3) << 3;
