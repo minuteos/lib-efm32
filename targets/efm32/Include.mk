@@ -35,7 +35,7 @@ $(info Simplicity Studio developer root: $(EFM32_DEV_ROOT))
 
 ifneq (,$(wildcard $(EFM32_DEV_ROOT)toolchains/gnu_arm/7.2_2017q4/bin/))
   $(info Using GCC 7.2 from Simplicity Studio)
-  export PATH := $(EFM32_DEV_ROOT)toolchains/gnu_arm/7.2_2017q4/bin/:$(PATH)
+  SHELL := env 'PATH=$(call unescspace,$(EFM32_DEV_ROOT))toolchains/gnu_arm/7.2_2017q4/bin/:$(PATH)' $(SHELL)
 else
   $(warning Simplicity Studio GCC 7.2 not found, recommend installing it using 'make si-install PACKAGE=com.silabs.ss.toolchain.gnu.arm.7.2.2017.q4')
 endif
