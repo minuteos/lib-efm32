@@ -7,6 +7,7 @@
  */
 
 #include <hw/EMU.h>
+#include <hw/CRYOTIMER.h>
 
 #include <em_emu.h>
 
@@ -36,3 +37,33 @@ async_def()
 async_end
 
 #endif
+
+void _EMU::EnterEM4(unsigned cryoWakeup, uint32_t ctrl)
+{
+    if (ctrl & EMU_EM4CTRL_EM4STATE)
+    {
+        // when going into hibernation, preserve RTCC
+        if (CMU->LFXOEnabled())
+        {
+            // if using LFXO, wait for it to be ready if it's too soon after sleep
+            while (!CMU->LFXOReady());
+            ASSERT(CMU->LFECLKSEL == 2);
+            ctrl |= EMU_EM4CTRL_RETAINLFXO | EMU_EM4CTRL_RETAINLFRCO;
+        }
+        else
+        {
+            // RTCC running off LFRCO
+            ASSERT(CMU->LFECLKSEL == 1);
+            ctrl |= EMU_EM4CTRL_RETAINLFRCO;
+        }
+    }
+
+    if (cryoWakeup)
+    {
+        ctrl |= EMU_EM4CTRL_RETAINULFRCO;
+        CRYOTIMER->WakeFromEM4(cryoWakeup);
+    }
+
+    EM4CTRL = ctrl;
+    EMU_EnterEM4();
+}

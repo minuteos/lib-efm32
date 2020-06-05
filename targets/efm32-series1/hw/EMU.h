@@ -20,7 +20,21 @@
 class _EMU : public EMU_TypeDef
 {
 public:
+    enum GPIORetain
+    {
+        Off = EMU_EM4CTRL_EM4IORETMODE_DISABLE,
+        UntilWakeup = EMU_EM4CTRL_EM4IORETMODE_EM4EXIT,
+        UntilUnlatch = EMU_EM4CTRL_EM4IORETMODE_SWUNLATCH,
+    };
+
     void Configure();
+
+    void Unlatch() { CMD = EMU_CMD_EM4UNLATCH; }
+
+    void Hibernate(unsigned ms = 0, GPIORetain retain = GPIORetain::UntilUnlatch) { EnterEM4(ms, EMU_EM4CTRL_EM4STATE_EM4H | retain); }
+    void Shutoff(unsigned ms = 0, GPIORetain retain = GPIORetain::UntilUnlatch) { EnterEM4(ms, EMU_EM4CTRL_EM4STATE_EM4S | retain); }
+
+    void EnterEM4(unsigned cryoWakeup, uint32_t em4ctrl);
 
 #ifdef _EMU_R5VOUTLEVEL_OUTLEVEL_MASK
     int R5VOutputLevel() { return 23 + ((R5VOUTLEVEL & _EMU_R5VOUTLEVEL_OUTLEVEL_MASK) >> _EMU_R5VOUTLEVEL_OUTLEVEL_SHIFT); }
