@@ -134,6 +134,25 @@ void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, uns
 
     unsigned n = (spec.pin - locOffset + EFM32_GPIO_LINEAR_INDEX[GetIndex(this)]) & 31;
 
+#else
+
+void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, GPIOLocations_t locations)
+{
+    unsigned n = 0;
+    int port = GetIndex(this);
+    for (;;)
+    {
+        if (!locations[n])
+            return;
+
+        if (locations[n].Port() == port && locations[n].Pin() == spec.pin)
+            break;
+
+        n++;
+    }
+
+#endif
+
     CMU->EnableGPIO();
 
     if (_Trace()) DBG("gpio: Routing port %c%d to peripheral %08X route %d location %d\n", 'A' + Index(), spec.pin, ((uint)&routepen) & ~(MASK(10)), spec.loc, n);
@@ -144,8 +163,6 @@ void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, uns
     SETBIT(routepen, spec.route);
     return Configure(BIT(spec.pin), spec.mode);
 }
-
-#endif
 
 uint32_t GPIOBlock::EnableInterrupt(GPIOPinID id, unsigned risingFalling)
 {
