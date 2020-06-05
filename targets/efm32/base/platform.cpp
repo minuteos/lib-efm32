@@ -13,6 +13,7 @@
 #include <hw/WDOG.h>
 #include <hw/CMU.h>
 #include <hw/EMU.h>
+#include <hw/RMU.h>
 #include <hw/GPIO.h>
 
 void _efm32_startup()
@@ -71,6 +72,7 @@ void _efm32_c_startup()
 
     EMU->Configure();
     CMU->Configure();
+    RMU->Configure();
 
     PLATFORM_WATCHDOG_HIT();
     WDOG0->Sync();
