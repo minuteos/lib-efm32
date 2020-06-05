@@ -12,3 +12,4 @@ EFM32_DEVICE ?= EFM32GG11B
 # use the most full-featured part by default
 EFM32_PART ?= efm32gg11b820*
 GBL_VARIANT = efx32gg11b
+JLINK_DEVICE ?= EFM32GG11B820F2048
