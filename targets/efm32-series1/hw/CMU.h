@@ -67,8 +67,13 @@ public:
 #else
     //! Configures clocks before going into deep sleep
     void DeepSleepPrepare() {}
+#if EFM32_USHFRCO_HFCLK
+    //! Restores clocks after wakeup from deep sleep
+    void DeepSleepRestore() { HFCLKSEL = CMU_HFCLKSEL_HF_USHFRCO; DisableHFRCO(); }
+#else
     //! Restores clocks after wakeup from deep sleep
     void DeepSleepRestore() {}
+#endif
     //! Estimates microseconds needed to restore full program operation after wakeup from deep sleep
     unsigned DeepSleepRestoreMicroseconds() { return 16; } // datasheet specifications for various models are around 12 us
 #endif
@@ -77,6 +82,8 @@ public:
     static constexpr unsigned GetCoreFrequency() { return EFM32_HFXO_FREQUENCY; }
 #elif EFM32_HFRCO_FREQUENCY
     static constexpr unsigned GetCoreFrequency() { return EFM32_HFRCO_FREQUENCY; }
+#elif EFM32_USHFRCO_HFCLK
+    static constexpr unsigned GetCoreFrequency() { return 48000000; }
 #else
     static constexpr unsigned GetCoreFrequency() { return 19000000; }
 #endif
