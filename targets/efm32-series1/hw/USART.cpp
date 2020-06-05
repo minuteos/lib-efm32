@@ -52,14 +52,14 @@ template<> const GPIOLocations_t _USART<5>::locClk = GPIO_LOC(pB(11), pD(13), pF
 template<> const GPIOLocations_t _USART<5>::locCts = GPIO_LOC(pB(14), pD(15), pF(11), pH(14));
 template<> const GPIOLocations_t _USART<5>::locRts = GPIO_LOC(pB(12), pB(15), pF(10), pH(15));
 
-const GPIOLocations_t USART::locsCs[] = {
-    _USART<0>::locCs,
-    _USART<1>::locCs,
-    _USART<2>::locCs,
-    _USART<3>::locCs,
-    _USART<4>::locCs,
-    _USART<5>::locCs,
-};
+#define ALL_LOCS(type) const GPIOLocations_t USART::locs ## type[] = { _USART<0>::loc ## type, _USART<1>::loc ## type, _USART<2>::loc ## type, _USART<3>::loc ## type, _USART<4>::loc ## type, _USART<5>::loc ## type }
+
+ALL_LOCS(Rx);
+ALL_LOCS(Tx);
+ALL_LOCS(Cs);
+ALL_LOCS(Clk);
+ALL_LOCS(Cts);
+ALL_LOCS(Rts);
 
 #endif
 

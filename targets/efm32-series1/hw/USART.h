@@ -123,6 +123,23 @@ public:
         SyncMasterDelaySample = USART_CTRL_SMSDELAY,
     };
 
+    enum Frame
+    {
+        FrameBits4 = USART_FRAME_DATABITS_FOUR,
+        FrameBits5 = USART_FRAME_DATABITS_FIVE,
+        FrameBits6 = USART_FRAME_DATABITS_SIX,
+        FrameBits7 = USART_FRAME_DATABITS_SEVEN,
+        FrameBits8 = USART_FRAME_DATABITS_EIGHT,
+        FrameBits9 = USART_FRAME_DATABITS_NINE,
+        FrameBits10 = USART_FRAME_DATABITS_TEN,
+        FrameBits11 = USART_FRAME_DATABITS_ELEVEN,
+        FrameBits12 = USART_FRAME_DATABITS_TWELVE,
+        FrameBits13 = USART_FRAME_DATABITS_THIRTEEN,
+        FrameBits14 = USART_FRAME_DATABITS_FOURTEEN,
+        FrameBits15 = USART_FRAME_DATABITS_FIFTEEN,
+        FrameBits16 = USART_FRAME_DATABITS_SIXTEEN,
+    };
+
     //! Gets the index of the USART peripheral
     unsigned Index() const { return ((unsigned)this >> 10) & 0xF; }
 
@@ -148,6 +165,8 @@ public:
 
     //! Configures the USART peripheral
     void Setup(Flags flags) { CTRL = flags; }
+    //! Configures the USART framing
+    void FrameSetup(Frame frame) { FRAME = frame; }
     //! Sets the fractional clock divider
     void ClkDiv(uint32_t value) { CLKDIV = ((value - ClkDivOne) << _USART_CLKDIV_DIV_SHIFT) & _USART_CLKDIV_DIV_MASK; }
     //! Gets the fractional clock divider
@@ -217,6 +236,10 @@ public:
     bool TxBusy() { return !(STATUS & USART_STATUS_TXIDLE); }
     //! Checks if the transmitter is idle
     bool TxIdle() { return STATUS & USART_STATUS_TXIDLE; }
+    //! Checks if the transmitter is tristated
+    bool TxTristated() { return STATUS & USART_STATUS_TXTRI; }
+    //! Checks if the transmission is completed
+    bool TxComplete() { return STATUS & USART_STATUS_TXC; }
 
     //! Transmits a single frame
     void Transmit(uint32_t data) { TXDATA = data; USART_TX_TRACE(this, data); }
@@ -240,9 +263,21 @@ public:
     unsigned GetCsLocation(GPIOPin pin) { return pin.GetLinearIndex(3); }
 #elif defined(_SILICON_LABS_32B_SERIES_1) && defined(_EFM32_GIANT_FAMILY)
 private:
-    static const GPIOLocations_t locsCs[];
+    static const GPIOLocations_t locsRx[], locsTx[], locsCs[], locsClk[], locsCts[], locsRts[];
 
 public:
+    //! Configures the RX pin
+    void ConfigureRx(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::Input) { pin.ConfigureAlternate(mode, ROUTEPEN, 0, locsRx[Index()]); }
+    //! Configures the TX pin
+    void ConfigureTx(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, ROUTEPEN, 1, locsTx[Index()]); }
+    //! Configures the CS pin
+    void ConfigureCs(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, ROUTEPEN, 2, locsCs[Index()]); }
+    //! Configures the CLK pin
+    void ConfigureClk(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, ROUTEPEN, 3, locsClk[Index()]); }
+    //! Configures the CTS pin
+    void ConfigureCts(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::Input) { pin.ConfigureAlternate(mode, ROUTEPEN, 4, locsCts[Index()]); }
+    //! Configures the RTS pin
+    void ConfigureRts(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, ROUTEPEN, 5, locsRts[Index()]); }
     //! Gets the location index for the CS pin
     unsigned GetCsLocation(GPIOPin pin) { return pin.GetLocation(locsCs[Index()]); }
 #endif
