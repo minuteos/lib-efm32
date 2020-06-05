@@ -19,7 +19,7 @@
 #endif
 
 #ifndef EFM32_WATCHDOG_TIMEOUT
-#define EFM32_WATCHDOG_TIMEOUT  500
+#define EFM32_WATCHDOG_TIMEOUT  100
 #endif
 
 

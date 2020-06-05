@@ -25,14 +25,15 @@
 class WDOG : public WDOG_TypeDef
 {
 public:
+    //! Gets the index of the peripheral
+    unsigned Index() const { return ((unsigned)this >> 10) & 0x3; }
+
     //! Configure watchdog with the specified timeout, optionally locking the configuration
-    void Configure(unsigned timeout, bool lock = false)
-    {
-        CMU->EnableLE();
-        CTRL = WDOG_CTRL_EN | (WDOG_CTRL_LOCK * lock) | TimeoutToPeriod(timeout) << _WDOG_CTRL_PERSEL_SHIFT;
-    }
+    void Configure(unsigned timeout, bool lock = false);
+    //! Check is the watchdog is enabled
+    bool Enabled() const { return CTRL & WDOG_CTRL_EN; }
     //! Disable watchdog
-    void Disable() { CTRL = 0; }
+    void Disable() { if (Enabled()) { Sync(); CTRL = 0; } }
     //! Sync pending commands
     void Sync() { while (SYNCBUSY); }
 
