@@ -28,3 +28,8 @@
 extern void _efm32_startup();
 extern void _efm32_c_startup();
 extern void _efm32_hit_watchdog();
+extern void _efm32_irq_clearing_handler(void* pIFC);
+
+#ifdef __cplusplus
+ALWAYS_INLINE void EFM32_SetIRQClearingHandler(IRQn_Type IRQn, volatile uint32_t& ifc) { Cortex_SetIRQHandler(IRQn, GetDelegate(_efm32_irq_clearing_handler, (void*)&ifc)); }
+#endif

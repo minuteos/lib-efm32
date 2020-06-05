@@ -94,6 +94,12 @@ void _efm32_hit_watchdog()
     WDOG0->Hit();
 }
 
+void _efm32_irq_clearing_handler(void* p)
+{
+    volatile uint32_t* pIFC = (volatile uint32_t*)p;
+    *pIFC = *pIFC;
+}
+
 #if GECKO_SIGNATURE
 __attribute__((section(".sig_gecko"))) uint8_t _efm32_signature[64];
 #endif
