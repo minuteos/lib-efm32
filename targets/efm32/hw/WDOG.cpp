@@ -10,8 +10,6 @@
 
 void WDOG::Configure(unsigned timeout, bool lock)
 {
-    CMU->EnableLE();
-
     CTRL = WDOG_CTRL_EN |
         (WDOG_CTRL_LOCK * lock) |           // optional lock
         (2 << _WDOG_CTRL_WARNSEL_SHIFT) |   // wakeup interrupt at 50%

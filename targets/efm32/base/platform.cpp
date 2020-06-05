@@ -55,6 +55,9 @@ void _efm32_startup()
     ITM->TCR = 0x10009;
     ITM->TER = ~0u;		// enable all channels
 #endif
+
+    // enable low-energy peripherals so that we know if RTCC kept running or not
+    CMU->EnableLE();
 }
 
 void _efm32_c_startup()
