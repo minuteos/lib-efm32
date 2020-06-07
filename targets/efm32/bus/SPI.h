@@ -42,7 +42,7 @@ public:
     //! Retrieves a ChipSelect handle for the specified GPIO pin for the current USART
     ChipSelect GetChipSelect(GPIOPin pin) { return ChipSelect(usart.GetCsLocation(pin)); }
     //! Acquires the bus for the device identified by the specified @ref ChipSelect
-    async(Acquire, ChipSelect cs, mono_t timeout = ~0u) { return async_forward(usart.BindCs, cs.loc, timeout); }
+    async(Acquire, ChipSelect cs, Timeout timeout = Timeout::Infinite) { return async_forward(usart.BindCs, cs.loc, timeout); }
     //! Releases the bus
     void Release() { usart.ReleaseCs(); }
 

@@ -78,10 +78,10 @@ bool USART::BindCs(unsigned loc)
     return true;
 }
 
-async(USART::BindCs, unsigned loc, mono_t timeout)
+async(USART::BindCs, unsigned loc, Timeout timeout)
 async_def()
 {
-    if (!await_mask_ticks(ROUTEPEN, USART_ROUTEPEN_CSPEN, 0, timeout))
+    if (!await_mask_timeout(ROUTEPEN, USART_ROUTEPEN_CSPEN, 0, timeout))
     {
         async_return(false);
     }

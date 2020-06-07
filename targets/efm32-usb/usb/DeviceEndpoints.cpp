@@ -93,17 +93,17 @@ void DeviceInEndpoint::TransferComplete()
     }
 }
 
-async(DeviceInEndpoint::Write, Span data, unsigned msTimeout)
+async(DeviceInEndpoint::Write, Span data, Timeout timeout)
 async_def(
-    mono_t waitUntil;
+    Timeout timeout;
     uint32_t sent;
 )
 {
-    f.waitUntil = MONO_CLOCKS + MonoFromMilliseconds(msTimeout);
+    f.timeout = timeout.MakeAbsolute();
     f.sent = 0;
 
     // writes are always synchronized, to prevent interleaving data from multiple sources
-    if (!await_acquire_until(lock, 1, f.waitUntil))
+    if (!await_acquire_timeout(lock, 1, f.timeout))
         async_return(0);
 
     int remaining;
@@ -126,7 +126,7 @@ async_def(
                 else
                 {
                     // wait for the current transmission to complete if the other buffer is full
-                    if (!await_signal_until(packetSent, f.waitUntil))
+                    if (!await_signal_timeout(packetSent, f.timeout))
                         break;
                     else
                         continue;
@@ -250,15 +250,17 @@ void DeviceOutEndpoint::TransferComplete()
     }
 }
 
-async(DeviceOutEndpoint::Read, Buffer data, unsigned msTimeout)
-async_def(mono_t waitUntil)
+async(DeviceOutEndpoint::Read, Buffer data, Timeout timeout)
+async_def(
+    Timeout timeout;
+)
 {
     newData = false;
-    f.waitUntil = MONO_CLOCKS + MonoFromMilliseconds(msTimeout);
+    f.timeout = timeout.MakeAbsolute();
 
     while (!usedAny)
     {
-        if (!await_signal_until(newData, f.waitUntil))
+        if (!await_signal_until(newData, f.timeout))
             async_return(0);
 
         newData = false;

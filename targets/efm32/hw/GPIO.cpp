@@ -216,7 +216,7 @@ void GPIOBlock::DisableInterrupt(uint32_t mask)
 }
 
 #ifdef Ckernel
-async(GPIOPort::WaitFor, uint32_t indexAndState, mono_t timeout)
+async(GPIOPort::WaitFor, uint32_t indexAndState, Timeout timeout)
 async_def(
     uint8_t index;
     bool state;
@@ -231,7 +231,7 @@ async_def(
     }
 
     f.intMask = GPIO->EnableInterrupt(GPIOPinID(Index(), f.index), 2 >> f.state);
-    bool result = await_mask_ticks(DIN, BIT(f.index), BIT(f.index) * f.state, timeout);
+    bool result = await_mask_timeout(DIN, BIT(f.index), BIT(f.index) * f.state, timeout);
     GPIO->DisableInterrupt(f.intMask);
     async_return(result);
 }

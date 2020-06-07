@@ -340,7 +340,7 @@ public:
     void Toggle() const;
 #ifdef Ckernel
     //! Waits for the pin to have the specified state
-    async(WaitFor, bool state, mono_t timeout = ASYNC_NO_TIMEOUT);
+    async(WaitFor, bool state, Timeout timeout = Timeout::Infinite);
 #endif
 
     //! Gets the input state of the GPIOPin
@@ -499,7 +499,7 @@ private:
 #endif
     void ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, GPIOLocations_t locations);
 #ifdef Ckernel
-    async(WaitFor, uint32_t indexAndState, mono_t timeout = 0);
+    async(WaitFor, uint32_t indexAndState, Timeout timeout = Timeout::Infinite);
 #endif
 
 #if TRACE
@@ -540,7 +540,7 @@ ALWAYS_INLINE void GPIOPin::ConfigureAlternate(Mode mode, volatile uint32_t& rou
 #endif
 ALWAYS_INLINE uint32_t GPIOPin::EnableInterrupt(bool rising, bool falling) const { return GPIO->EnableInterrupt(GetID(), (rising * 1) | (falling * 2)); }
 #ifdef Ckernel
-ALWAYS_INLINE async(GPIOPin::WaitFor, bool state, mono_t timeout) { return async_forward(Port().WaitFor, (state << 4) | Index(), timeout); }
+ALWAYS_INLINE async(GPIOPin::WaitFor, bool state, Timeout timeout) { return async_forward(Port().WaitFor, (state << 4) | Index(), timeout); }
 #endif
 
 ALWAYS_INLINE void GPIOPin::Set() const { port->DOUT |= mask; }

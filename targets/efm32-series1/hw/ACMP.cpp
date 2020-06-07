@@ -94,13 +94,13 @@ found:
 #endif
 }
 
-async(ACMP::WaitForEdge, mono_t timeout)
+async(ACMP::WaitForEdge, Timeout timeout)
 async_def()
 {
     InterruptEnable();
     Cortex_SetIRQWakeup(IRQn());
     SCB->EnableWake(IRQn());
-    bool res = await_mask_ticks(IFC, ACMP_IFC_EDGE, ACMP_IFC_EDGE, timeout);
+    bool res = await_mask_timeout(IFC, ACMP_IFC_EDGE, ACMP_IFC_EDGE, timeout);
     InterruptDisable();
     async_return(res);
 }
