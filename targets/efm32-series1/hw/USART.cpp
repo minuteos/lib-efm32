@@ -165,3 +165,52 @@ async_def()
     async_return(res);
 }
 async_end
+
+static unsigned diff(unsigned a, unsigned b) { return a > b ? a - b : b - a; }
+
+void USART::BaudRate(unsigned baudRate)
+{
+    uint32_t best = 0, bestOvs = 0, bestDiv = 0;
+    auto freq = ClockFrequency();
+    auto freqScaled = freq << ClkDivFracBits;
+
+    for (unsigned i = 0; i < 4; i++)
+    {
+        unsigned ovs = ClockOversampling(i);
+        unsigned clock = baudRate * ovs;
+        if (clock > freq)
+        {
+            if (i == 3)
+            {
+                // calculate maximum possible baudRate
+                clock = freq;
+            }
+            else
+            {
+                continue;
+            }
+        }
+
+        unsigned div = (freqScaled + clock / 2) / clock;
+        unsigned res = freqScaled / div / ovs;
+        if (diff(res, baudRate) < diff(best, baudRate))
+        {
+            best = res;
+            bestOvs = i;
+            bestDiv = div;
+
+            if (diff(res, baudRate) < baudRate / 100)
+            {
+                // precision is better than 1%
+                break;
+            }
+        }
+    }
+
+    DBGL("USART%d: baud rate = %d, %dx oversampling (%.3q%% off %d)",
+        Index(), best, ClockOversampling(bestOvs),
+        diff(best, baudRate) * 100000 / baudRate, baudRate);
+
+    ClkDiv(bestDiv);
+    ClockOversamplingIndex(bestOvs);
+}

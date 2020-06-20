@@ -123,6 +123,18 @@ public:
         SyncMasterDelaySample = USART_CTRL_SMSDELAY,
     };
 
+    enum FlagsEx
+    {
+        CtsInvert = USART_CTRLX_CTSINV,
+        CtsEnable = USART_CTRLX_CTSEN,
+
+        RtsInvert = USART_CTRLX_RTSINV,
+
+        DebugHalt = USART_CTRLX_DBGHALT,
+
+        _Default = _USART_CTRLX_RESETVALUE,
+    };
+
     enum Frame
     {
         FrameBits4 = USART_FRAME_DATABITS_FOUR,
@@ -138,6 +150,15 @@ public:
         FrameBits14 = USART_FRAME_DATABITS_FOURTEEN,
         FrameBits15 = USART_FRAME_DATABITS_FIFTEEN,
         FrameBits16 = USART_FRAME_DATABITS_SIXTEEN,
+
+        ParityNone = USART_FRAME_PARITY_NONE,
+        ParityEven = USART_FRAME_PARITY_EVEN,
+        ParityOdd = USART_FRAME_PARITY_ODD,
+
+        StopBitsHalf = USART_FRAME_STOPBITS_HALF,
+        StopBitsOne = USART_FRAME_STOPBITS_ONE,
+        StopBitsOneAndHalf = USART_FRAME_STOPBITS_ONEANDAHALF,
+        StopBitsTwo = USART_FRAME_STOPBITS_TWO,
     };
 
     //! Gets the index of the USART peripheral
@@ -164,7 +185,7 @@ public:
     IRQn_Type TxIRQn() const { return (IRQn_Type)(RxIRQn() + 1); }
 
     //! Configures the USART peripheral
-    void Setup(Flags flags) { CTRL = flags; }
+    void Setup(Flags flags, FlagsEx flagsEx = FlagsEx::_Default) { CTRL = flags; CTRLX = flagsEx; }
     //! Configures the USART framing
     void FrameSetup(Frame frame) { FRAME = frame; }
     //! Sets the fractional clock divider
@@ -182,12 +203,20 @@ public:
     //! Gets the output frequency in synchronous mode
     unsigned OutputFrequency() { return OutputClock() >> 1; }
 
+    //! Gets the clock oversampling in asynchronous mode
+    unsigned ClockOversampling() const { return ClockOversampling(ClockOversamplingIndex()); }
+
     //! Sets the baud rate in asynchronous mode
     //! @warning assumes 16x oversampling
-    void BaudRate(unsigned baudRate) { OutputClock(baudRate << 4); }
+    void BaudRateUnsafe(unsigned baudRate) { OutputClock(baudRate << 4); }
     //! Gets the baud rate in asynchronous mode
     //! @warning assumes 16x oversampling
-    unsigned BaudRate() { return OutputClock() >> 4; }
+    unsigned BaudRateUnsafe() { return OutputClock() >> 4; }
+
+    //! Sets the baud rate and appropriate oversampling in asynchronous mode
+    void BaudRate(unsigned baudRate);
+    //! Gets the baud rate in asynchronous mode
+    unsigned BaudRate() { return OutputClock() / ClockOversampling(); }
 
     //! Enables data reception
     void RxEnable() { CMD = USART_CMD_RXEN; }
@@ -337,11 +366,20 @@ public:
     //! Performs a single synchronous bidirectional transfer
     async(SyncTransferSingle, uint32_t data);
 
+    //! Sets clock oversampling by index
+    void ClockOversamplingIndex(unsigned index) { MODMASK(CTRL, _USART_CTRL_OVS_MASK, index << _USART_CTRL_OVS_SHIFT); }
+    //! Gets the currently set clock oversampling index
+    unsigned ClockOversamplingIndex() const { return (CTRL & _USART_CTRL_OVS_MASK) >> _USART_CTRL_OVS_SHIFT; }
+    //! Gets the actual clock oversampling value by index
+    unsigned ClockOversampling(unsigned index) const { return BYTES(16,8,6,4)[index]; }
+
 private:
     RES_PAIR_DECL(BeginSyncTransferImpl, SyncTransferDescriptor* descriptors, size_t count);
 };
 
 DEFINE_FLAG_ENUM(USART::Flags);
+DEFINE_FLAG_ENUM(USART::FlagsEx);
+DEFINE_FLAG_ENUM(USART::Frame);
 
 template<unsigned n> class _USART : public USART
 {
