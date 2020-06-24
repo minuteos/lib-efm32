@@ -53,4 +53,8 @@ private:
     {
         return std::min(15, 29 - __builtin_clz(timeout));
     }
+
+#if DEBUG
+    void IRQHandler();
+#endif
 };
