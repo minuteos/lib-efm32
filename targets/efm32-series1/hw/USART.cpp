@@ -81,14 +81,18 @@ bool USART::BindCs(unsigned loc)
 async(USART::BindCs, unsigned loc, Timeout timeout)
 async_def()
 {
-    if (!await_mask_timeout(ROUTEPEN, USART_ROUTEPEN_CSPEN, 0, timeout))
+    while (await_mask_timeout(ROUTEPEN, USART_ROUTEPEN_CSPEN, 0, timeout))
     {
-        async_return(false);
+        // additional check since we cannot use await_acquire (don't want to set ROUTEPEN early)
+        if (!(ROUTEPEN & USART_ROUTEPEN_CSPEN))
+        {
+            MODMASK(ROUTELOC0, _USART_ROUTELOC0_CSLOC_MASK, loc << _USART_ROUTELOC0_CSLOC_SHIFT);
+            ROUTEPEN |= USART_ROUTEPEN_CSPEN;
+            async_return(true);
+        }
     }
 
-    MODMASK(ROUTELOC0, _USART_ROUTELOC0_CSLOC_MASK, loc << _USART_ROUTELOC0_CSLOC_SHIFT);
-    ROUTEPEN |= USART_ROUTEPEN_CSPEN;
-    async_return(true);
+    async_return(false);
 }
 async_end
 
