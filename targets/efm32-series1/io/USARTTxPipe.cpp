@@ -49,7 +49,7 @@ async_def(
     f.dma = LDMA->GetUSARTChannel(usart.Index(), LDMAChannel::USARTSignal::TxFree, true);
     MYDBG("Starting");
 
-    while (await(pipe.Read))
+    while (await(pipe.Require))
     {
         auto span = pipe.GetSpan();
         MYTRACE(">> %H", span);
