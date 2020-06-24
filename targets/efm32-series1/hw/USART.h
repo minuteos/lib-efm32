@@ -333,6 +333,12 @@ public:
             tx.SetTransfer(d, NULL, d.Length(), LDMADescriptor::UnitByte | LDMADescriptor::M2P);
         }
 
+        void TransmitSame(const uint8_t* src, size_t length)
+        {
+            rx.SetTransfer((const void*)NULL, &s_discard, length, LDMADescriptor::UnitByte | LDMADescriptor::P2P);
+            tx.SetTransfer(src, NULL, length, LDMADescriptor::UnitByte | LDMADescriptor::P2P);
+        }
+
         void Receive(Buffer d)
         {
             rx.SetTransfer((const void*)NULL, d.Pointer(), d.Length(), LDMADescriptor::UnitByte | LDMADescriptor::P2M);
