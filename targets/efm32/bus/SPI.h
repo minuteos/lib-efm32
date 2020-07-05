@@ -39,6 +39,9 @@ public:
     //! Represents an single SPI transfer step
     using Descriptor = USART::SyncTransferDescriptor;
 
+    //! Gets the maximum number of bytes that can be transferred using a single transfer descriptor
+    constexpr static size_t MaximumTransferSize() { return LDMADescriptor::MaximumTransferSize; }
+
     //! Retrieves a ChipSelect handle for the specified GPIO pin for the current USART
     ChipSelect GetChipSelect(GPIOPin pin) { return ChipSelect(usart.GetCsLocation(pin)); }
     //! Acquires the bus for the device identified by the specified @ref ChipSelect

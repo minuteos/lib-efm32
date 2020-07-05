@@ -352,6 +352,8 @@ public:
             rx.SetTransfer((const void*)NULL, receive.Pointer(), receive.Length(), LDMADescriptor::UnitByte | LDMADescriptor::P2M);
             tx.SetTransfer(transmit, NULL, receive.Length(), LDMADescriptor::UnitByte | LDMADescriptor::M2P);
         }
+
+        size_t Length() const { return tx.Count(); }
     };
 
     //! Starts a simple synchronous bidirectional transfer

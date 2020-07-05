@@ -56,6 +56,8 @@ public:
 
         RelativeSource = LDMA_CH_CTRL_SRCMODE_RELATIVE,
         RelativeDestination = LDMA_CH_CTRL_DSTMODE_RELATIVE,
+
+        MaximumTransferSize = (_LDMA_CH_CTRL_XFERCNT_MASK >> _LDMA_CH_CTRL_XFERCNT_SHIFT) + 1,
     };
 
 public:
