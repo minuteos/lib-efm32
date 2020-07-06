@@ -68,7 +68,7 @@ public:
     //! Gets the real time, if set previously
     uint32_t Time() { return CNT + TimeOffset(); }
     //! Sets the real time
-    void SetTime(uint32_t time) { TimeOffset() = time - CNT; }
+    void SetTime(uint32_t time) { TimeOffset() = nonzero(time - CNT); }
     //! Configures the specified channel for input capture
     void SetupCapture(unsigned channel, unsigned prsChannel, ChannelFlags flags)
         { ASSERT(channel < countof(CC)); CC[channel].CTRL = flags | ChannelModeCapture | ChannelFlags(prsChannel << ChannelPRSOffset); }
@@ -83,6 +83,8 @@ public:
     void InterruptClear(unsigned channel) { IFC = RTCC_IEN_CC0 << channel; }
     bool InterruptActive(unsigned channel) { return IF & (RTCC_IEN_CC0 << channel); }
 
+    volatile uint32_t& TimeOffset() { return RET[0].REG; }
+
 #ifdef Ckernel
     async(WaitFor, unsigned channel);
 #endif
@@ -90,8 +92,6 @@ public:
 private:
     // RTC must not be configured by application
     void Setup(Flags flags) { CTRL = flags; }
-
-    volatile uint32_t& TimeOffset() { return RET[0].REG; }
 };
 
 DEFINE_FLAG_ENUM(_RTCC::Flags);
