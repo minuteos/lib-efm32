@@ -40,6 +40,7 @@ void _efm32_startup()
     CMU->EnableAUXHFRCO();
     while (!CMU->AUXHFRCOReady());
 
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     ITM->LAR = 0xC5ACCE55;   // unlock
 
     // disable ITM
@@ -52,7 +53,7 @@ void _efm32_startup()
     TPI->FFCR = 0x100;  // EnFTC
 
     // enable ITM
-    ITM->TCR = 0x10009;
+    ITM->TCR = (1 << ITM_TCR_TraceBusID_Pos) | ITM_TCR_SWOENA_Msk | ITM_TCR_ITMENA_Msk;
     ITM->TER = ~0u;		// enable all channels
 #endif
 
@@ -95,7 +96,7 @@ void _efm32_c_startup()
 void _efm32_hit_watchdog()
 {
     WDOG0->Hit();
-}
+    }
 
 void _efm32_irq_clearing_handler(void* p)
 {
