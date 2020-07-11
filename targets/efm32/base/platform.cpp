@@ -63,8 +63,10 @@ void _efm32_startup()
 
 void _efm32_c_startup()
 {
+#if EFM32_WATCHDOG_TIMEOUT
     // configure watchdog for a long timeout (for clocks init)
     WDOG0->Configure(2000);
+#endif
 
     // use the "clear interrupts on read" semantics (reading IFC is the same as IFC = IF)
     // also enable bus faults when accessing disabled peripherals
@@ -78,13 +80,11 @@ void _efm32_c_startup()
     CMU->Configure();
     RMU->Configure();
 
+#if EFM32_WATCHDOG_TIMEOUT
     PLATFORM_WATCHDOG_HIT();
     WDOG0->Sync();
-#if defined(EFM32_WATCHDOG_TIMEOUT) && EFM32_WATCHDOG_TIMEOUT > 0
     // lock watchdog configuration with configured timeout
     WDOG0->Configure(EFM32_WATCHDOG_TIMEOUT, true);
-#else
-    WDOG0->Disable();
 #endif
 
 #ifdef EFM32_RTC
@@ -93,10 +93,12 @@ void _efm32_c_startup()
 #endif
 }
 
+#if EFM32_WATCHDOG_TIMEOUT
 void _efm32_hit_watchdog()
 {
     WDOG0->Hit();
-    }
+}
+#endif
 
 void _efm32_irq_clearing_handler(void* p)
 {
