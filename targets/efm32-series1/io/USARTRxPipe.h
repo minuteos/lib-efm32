@@ -34,15 +34,15 @@ private:
     PipeWriter pipe;
     size_t blockSize;
     LDMAChannelHandle dma;
+    LDMADescriptor* allocList;
     PipePosition dmapos;
     bool dmaMonitor = false;
-
-    LDMADescriptor* freeDescriptors;
 
     async(DMATask);
     async(DMAMonitor);
 
     void StartDMAMonitor();
+    void FreeUnusedDescriptors(LDMADescriptor* stop);
 };
 
 }

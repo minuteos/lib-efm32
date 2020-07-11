@@ -10,12 +10,16 @@
 
 #include <hw/LDMA.h>
 
-//#define USART_RXPIPE_TRACE    1
+#define TRACE_DMA       1
+#define TRACE_PIPE      2
+#define TRACE_DATA      4
+
+//#define USART_RXPIPE_TRACE   TRACE_DATA
 
 #define MYDBG(fmt, ...)      DBGL("USART%d_RX: " fmt, usart.Index(), ## __VA_ARGS__)
 
 #if USART_RXPIPE_TRACE
-#define MYTRACE MYDBG
+#define MYTRACE(flag, ...) if ((USART_RXPIPE_TRACE) & (flag)) { MYDBG(__VA_ARGS__); }
 #else
 #define MYTRACE(...)
 #endif
@@ -62,51 +66,87 @@ async_def(
 async_end
 
 async(USARTRxPipe::DMATask)
-async_def(
-    LDMADescriptor desc;
-    bool first;
-)
+async_def()
 {
-    f.first = true;
     MYDBG("Starting");
 
     dmapos = pipe.Position();
 
     while (pipe.AvailableAfter(dmapos) || await(pipe.Allocate, blockSize))
     {
-        dma.Disable();
+        bool running = dma.IsEnabled();
+        if (running)
+        {
+            dma.Disable();
+            while (dma.IsBusy());   // make sure DMA is stopped before linking new segments
+        }
+
         // either start or link the next segment
-        auto buf = pipe.GetBufferAt(dmapos);
-        f.desc.SetTransfer(&usart.RXDATA, buf.Pointer(), buf.Length(), LDMADescriptor::P2M | LDMADescriptor::UnitByte | LDMADescriptor::SetDone);
-        dmapos += buf.Length();
-        if (f.first || dma.IsDone())
+        auto buf = pipe.GetBufferAt(dmapos).Left(LDMADescriptor::MaximumTransferSize);
+        LDMADescriptor* desc;
+        if (!running)
         {
             // start new DMA
-            MYTRACE("Initial RX buffer %d bytes @ %p", buf.Length(), buf.Pointer());
-            f.first = false;
-            dma.LinkLoad(f.desc);
-            ASSERT(dma.IsEnabled());
-            usart.RxEnable();
-            StartDMAMonitor();
+            MYTRACE(TRACE_DMA, "BUF =%p+%d", buf.Pointer(), buf.Length());
+            // we can remove the volatile qualifier, DMA is stopped
+            desc = (LDMADescriptor*)&dma.RootDescriptor();
         }
         else
         {
-            // link to current DMA descriptor
-            MYTRACE("Linked RX buffer %d bytes @ %p", buf.Length(), buf.Pointer());
-            dma.RootDescriptor().Link(&f.desc);
-            dma.ClearDone();
-            dma.Enable();
-            StartDMAMonitor();
-            // wait for the previous block to complete before enqueuing another one
-            await(dma.WaitForDoneFlag);
-            MYTRACE("Initial buffer finished");
+            // link another segment
+            desc = MemPoolAlloc<LDMADescriptor>();
+            if (!desc)
+            {
+                // cannot allocate descriptor, need to wait
+                auto mon = MemPoolGet<LDMADescriptor>()->WatchPointer();
+                if (running)
+                {
+                    dma.Enable();
+                }
+                await_mask_not(*mon, ~0u, *mon);
+                continue;
+            }
+            LDMADescriptor* d = (LDMADescriptor*)&dma.RootDescriptor(); // we can remove the volatile qualifier, DMA is stopped
+            if (auto firstLink = d->LinkedDescriptor())
+            {
+                // find the end of the list, we also must have an allocList at this point
+                ASSERT(allocList);
+                d = firstLink;
+                while (auto next = d->LinkedDescriptor())
+                {
+                    d = next;
+                }
+            }
+            else
+            {
+                // linking first descriptor - it is possible that allocList still exists, in this case
+                // we need to link the descriptor at the end of it anyway, to avoid breaking the chain
+                if (auto al = allocList)
+                {
+                    while (auto next = al->LinkedDescriptor())
+                        al = next;
+                    al->Link(desc);
+                }
+                else
+                {
+                    allocList = desc;
+                }
+            }
+            MYTRACE(TRACE_DMA, "LNK+%p %p+%d (%p)", desc, buf.Pointer(), buf.Length(), d);
+            d->Link(desc);
         }
+        desc->SetTransfer(&usart.RXDATA, buf.Pointer(), buf.Length(), LDMADescriptor::P2M | LDMADescriptor::UnitByte);
+        dmapos += buf.Length();
+        dma.Enable();
+        usart.RxEnable();
+        StartDMAMonitor();
     }
 
     // release channel
     usart.RxDisable();
     dma.SourceNone();
     dma.RootDescriptor().Destination(NULL); // this wakes up the rx task
+    FreeUnusedDescriptors(NULL);
     await_signal_off(dmaMonitor);
     dma = LDMAChannelHandle();
     MYDBG("Finished");
@@ -122,6 +162,19 @@ void USARTRxPipe::StartDMAMonitor()
     }
 }
 
+void USARTRxPipe::FreeUnusedDescriptors(LDMADescriptor* stop)
+{
+    auto p = allocList;
+    while (p && p != stop)
+    {
+        auto next = p->LinkedDescriptor();
+        MYTRACE(TRACE_DMA, "LNK-%p %p+%d", p, p->Destination(), p->Count());
+        MemPoolFree(p);
+        p = next;
+    }
+    allocList = p;
+}
+
 async(USARTRxPipe::DMAMonitor)
 async_def()
 {
@@ -132,29 +185,29 @@ async_def()
 
     while (!pipe.IsClosed())
     {
+        // we can free all descriptors up to the currently linked one
+        FreeUnusedDescriptors(dma.LinkedDescriptor());
         auto& dstPtr = dma.RootDescriptor().DST;
         auto pMax = (char*)dstPtr;
         NVIC_ClearPendingIRQ(usart.RxIRQn());
-        MYTRACE("pMax = %p", pMax);
         if (!pMax)
         {
             // DST gets zeroed explicitly when stopping
             break;
         }
-        auto buf = pipe.GetBuffer();
-        while (size_t count = pMax - buf.Pointer())
+        size_t count;
+        Buffer buf;
+        while (pipe.Available() && (buf = pipe.GetBuffer(), count = pMax - buf.Pointer()))
         {
             // if the DMA is already writing to another buffer, count will be bigger than buffer size regardless of
             // where the other buffer is located due to overflow
-            MYTRACE("<< %H", buf.Left(count));
-            pipe.Advance(std::min(count, buf.Length()));
+            auto newData = buf.Left(count);
+            MYTRACE(TRACE_PIPE, "%p+%d=%p", newData.Pointer(), newData.Length(), newData.end());
+            MYTRACE(TRACE_DATA, "[%p] << %H", newData.Pointer(), newData);
+            pipe.Advance(newData.Length());
             if (count <= buf.Length())
             {
                 break;
-            }
-            else
-            {
-                buf = pipe.GetBuffer();
             }
         }
         await_mask_not(dstPtr, ~0u, pMax);
