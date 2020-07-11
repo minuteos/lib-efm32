@@ -490,7 +490,7 @@ ALWAYS_INLINE bool LDMAChannelHandle::IsEnabled() const { return GETBIT(LDMA->CH
 
 ALWAYS_INLINE bool LDMAChannelHandle::IsBusy() const { return GETBIT(LDMA->CHBUSY, index); }
 
-ALWAYS_INLINE void LDMAChannelHandle::ClearDone() { EFM32_BITCLR(LDMA->CHDONE, BIT(index)); }
+ALWAYS_INLINE void LDMAChannelHandle::ClearDone() { EFM32_BITCLR(LDMA->CHDONE, BIT(index)); LDMA->IFC = BIT(index); }
 ALWAYS_INLINE void LDMAChannelHandle::SetDone() { EFM32_BITSET(LDMA->CHDONE, BIT(index)); LDMA->IFS = BIT(index); }
 ALWAYS_INLINE bool LDMAChannelHandle::IsDone() const { return GETBIT(LDMA->CHDONE, index); }
 
