@@ -25,7 +25,7 @@ void _efm32_startup()
     // configure AUXHFRCO to 16 MHz so that it can clock ADC directly
     CMU->AUXHFRCOCTRL = DEVINFO->AUXHFRCOCAL7;
 
-#if TRACE
+#if TRACE || MINTRACE
     // enable clock to GPIO
     CMU->EnableGPIO();
 

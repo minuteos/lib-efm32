@@ -21,13 +21,13 @@ BEGIN_EXTERN_C
 #define BTL_APP_SPACE_SIZE              GECKO_BOOTLOADER_APP_SPACE
 #define LIBRARY_BUILD
 
-#ifdef TRACE
+#ifdef MINITRACE
 #define BTL_PLUGIN_DEBUG_PRINT  1
 
 ALWAYS_INLINE void btl_debugInit(void) { }
 ALWAYS_INLINE void btl_debugWriteChar(char c) { _DBGCHAR(c); }
-ALWAYS_INLINE void btl_debugWriteString(const char * s) { _DBG("%s", s); }
-ALWAYS_INLINE void btl_debugWriteLine(const char * s) { _DBG("%s\n", s); }
+ALWAYS_INLINE void btl_debugWriteString(const char * s) { _DBGS(s); }
+ALWAYS_INLINE void btl_debugWriteLine(const char * s) { DBGS(s); }
 
 ALWAYS_INLINE void btl_debugWriteCharHex(uint8_t number) { _DBG("%02X", number); }
 ALWAYS_INLINE void btl_debugWriteShortHex(uint16_t number) { _DBG("%04X", number); }
