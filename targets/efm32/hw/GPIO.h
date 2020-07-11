@@ -543,10 +543,10 @@ ALWAYS_INLINE uint32_t GPIOPin::EnableInterrupt(bool rising, bool falling) const
 ALWAYS_INLINE async(GPIOPin::WaitFor, bool state, Timeout timeout) { return async_forward(Port().WaitFor, (state << 4) | Index(), timeout); }
 #endif
 
-ALWAYS_INLINE void GPIOPin::Set() const { port->DOUT |= mask; }
-ALWAYS_INLINE void GPIOPin::Res() const { port->DOUT &= ~mask; }
+ALWAYS_INLINE void GPIOPin::Set() const { EFM32_BITSET(port->DOUT, mask); }
+ALWAYS_INLINE void GPIOPin::Res() const { EFM32_BITCLR(port->DOUT, mask); }
 ALWAYS_INLINE void GPIOPin::Toggle() const { port->DOUTTGL = mask; }
-ALWAYS_INLINE void GPIOPin::Set(bool state) const { port->DOUT = state ? port->DOUT | mask : port->DOUT & ~mask; }
+ALWAYS_INLINE void GPIOPin::Set(bool state) const { EFM32_BITMOD(state, port->DOUT, mask); }
 ALWAYS_INLINE bool GPIOPin::Get() const { return port->DIN & mask; }
 
 class APORTX : public APORT
