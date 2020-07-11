@@ -16,8 +16,29 @@
 
 __attribute__((used, section(".bootloader.table"))) const MainBootloaderTable_t mainStageTable;
 
+#include <em_core.h>
+
+#undef CORE_ENTER_CRITICAL
+#undef CORE_EXIT_CRITICAL
+#undef CORE_DECLARE_IRQ_STATE
+#define CORE_ENTER_CRITICAL()
+#define CORE_EXIT_CRITICAL()
+#define CORE_DECLARE_IRQ_STATE
+
 #include <core/btl_core.c>
 #include <core/btl_main.c>
+
+#include <sl_crypto/src/crypto_aes.c>
+#include <sl_crypto/src/crypto_ecp.c>
+#include <sl_crypto/src/crypto_sha.c>
+#include <sl_crypto/src/crypto_management.c>
+#include <sl_crypto/src/shax.c>
+
+#include <library/bignum.c>
+
+#undef EC_BIGINT_COPY
+#undef ECC_BIGINT_SIZE_IN_BYTES
+#undef ECC_BIGINT_SIZE_IN_32BIT_WORDS
 
 #include <plugin/parser/btl_image_parser.c>
 #include <plugin/parser/ebl/btl_gbl_custom_tags.c>
