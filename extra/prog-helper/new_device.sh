@@ -2,6 +2,7 @@
 
 DEVICE="bgm13p22"
 COMMANDER="/Applications/Simplicity Studio.app/Contents/Eclipse/developer/adapter_packs/commander/Commander.app/Contents/MacOS/commander"
+DEVICE_ARGS="-d $DEVICE --speed=4000"
 
 function try_image {
     if [ -z "$IMAGE" ]; then
@@ -41,7 +42,7 @@ fi
 
 function waitForDevice {
     printf "Waiting for device, press any key to abort..."
-    until "$COMMANDER" device -d "$DEVICE" info </dev/null >/dev/null; do
+    until "$COMMANDER" device $DEVICE_ARGS info </dev/null >/dev/null; do
         if read -rsn1 -t1; then
             echo ABORTED
             return -1
@@ -66,24 +67,24 @@ while waitForDevice; do
 
     if [ -z "$NO_ERASE" ]; then
         echo "Mass erasing flash..."
-        "$COMMANDER" device -d "$DEVICE" masserase
+        "$COMMANDER" device $DEVICE_ARGS masserase
     fi
 
     if [ -n "$TOKEN_CONFIG" ]; then
         echo "Flashing manufacturing tokens..."
-        "$COMMANDER" flash -d "$DEVICE" --tokengroup znet $TOKEN_CONFIG
+        "$COMMANDER" flash $DEVICE_ARGS --tokengroup znet $TOKEN_CONFIG
     fi
 
     echo "Flashing image from $IMAGE..."
-    "$COMMANDER" flash -d "$DEVICE" "$IMAGE"
+    "$COMMANDER" flash $DEVICE_ARGS "$IMAGE"
 
     if [ -z "$NO_LOCK" ]; then
         echo "Locking debug access..."
-        "$COMMANDER" device -d "$DEVICE" lock --debug enable
+        "$COMMANDER" device $DEVICE_ARGS lock --debug enable
     fi
 
     echo "Resetting device..."
-    "$COMMANDER" device -d "$DEVICE" reset
+    "$COMMANDER" device reset
 
     echo
     echo "$(tput setaf 2)$(tput bold)Success$(tput sgr0)"

@@ -10,6 +10,7 @@ if "%DEVICE%" == "" set DEVICE="bgm13p22"
 if "%COMMANDER%" == "" set COMMANDER="c:\SiliconLabs\SimplicityStudio\v4\developer\adapter_packs\commander\commander.exe"
 if "%IMAGE%" == "" for %%F in ("bin\*-signed.axf") do set IMAGE="%%~dpnF.s37"
 if "%IMAGE%" == "" for %%F in ("bin\*.axf") do set IMAGE="%%~dpnF.s37"
+set DEVICE_ARGS="-d %DEVICE% --speed=4000"
 
 if not exist %IMAGE% (
     echo No image found for flashing
@@ -33,7 +34,7 @@ if "%NO_ERASE%" == "" (
     echo Waiting for device, press X to abort...
 
 :waitForDevice2
-    %COMMANDER% device -d %DEVICE% info >NUL
+    %COMMANDER% device %DEVICE_ARGS% info >NUL
     if errorlevel 0 (
         echo Device found.
         goto program
@@ -49,28 +50,28 @@ if "%NO_ERASE%" == "" (
 :program
     if "%NO_ERASE%" == "" (
         echo Mass erasing flash...
-        %COMMANDER% device -d %DEVICE% masserase
+        %COMMANDER% device %DEVICE_ARGS% masserase
         if errorlevel 1 goto error
     )
 
     if not "%TOKEN_CONFIG%" == "" (
         echo Flashing manufacturing tokens...
-        %COMMANDER% flash -d %DEVICE% --tokengroup znet %TOKEN_CONFIG%
+        %COMMANDER% flash %DEVICE_ARGS% --tokengroup znet %TOKEN_CONFIG%
         if errorlevel 1 goto error
     )
 
     echo Flashing main image from %IMAGE%...
-    %COMMANDER% flash -d %DEVICE% %IMAGE%
+    %COMMANDER% flash %DEVICE_ARGS% %IMAGE%
     if errorlevel 1 goto error
 
     if "%NO_ERASE%" == "" (
         echo Locking debug access...
-        %COMMANDER% device -d %DEVICE% lock --debug enable
+        %COMMANDER% device %DEVICE_ARGS% lock --debug enable
         if errorlevel 1 goto error
     )
 
     echo Resetting device...
-    %COMMANDER% device -d %DEVICE% reset
+    %COMMANDER% device reset
     if errorlevel 1 goto error
 
     echo.
