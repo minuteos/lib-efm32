@@ -8,6 +8,12 @@
 
 #pragma once
 
+#if EFM32_USE_GPIO_SPI
+
+#include "SPI_GPIO.h"
+
+#else
+
 #include <base/base.h>
 
 #include <hw/USART.h>
@@ -58,3 +64,5 @@ public:
 };
 
 }
+
+#endif
