@@ -350,6 +350,12 @@ public:
             tx.SetTransfer(&s_zero, NULL, d.Length(), LDMADescriptor::UnitByte | LDMADescriptor::P2P);
         }
 
+        void ReceiveSame(volatile void* dst, size_t length)
+        {
+            rx.SetTransfer((const void*)NULL, dst, length, LDMADescriptor::UnitByte | LDMADescriptor::P2P);
+            tx.SetTransfer(&s_zero, NULL, length, LDMADescriptor::UnitByte | LDMADescriptor::P2P);
+        }
+
         void Bidirectional(Buffer d) { Bidirectional(d, d); }
         void Bidirectional(Span transmit, Buffer receive)
         {
