@@ -35,6 +35,13 @@ public:
 private:
     uint32_t value;
 
+    static constexpr LDMADescriptor* Decode(uint32_t value, const volatile void* relativeTo)
+    {
+        return value & 2 ?
+            (LDMADescriptor*)(((value & 1) ? (intptr_t)relativeTo : 0) + (value & ~3)) :
+            NULL;
+    }
+
     friend class LDMADescriptor;
 };
 
@@ -192,6 +199,8 @@ public:
     ALWAYS_INLINE void Count(size_t val) volatile { MODMASK_SAFE(CTRL, _LDMA_CH_CTRL_XFERCNT_MASK, (val - 1) << _LDMA_CH_CTRL_XFERCNT_SHIFT); }
     //! Sets the linked descriptor to be used after this one completes
     ALWAYS_INLINE void Link(LDMALink link) volatile { LINK = link.value; }
+    //! Gets the descriptor this one links to
+    ALWAYS_INLINE LDMADescriptor* LinkedDescriptor() volatile const { return LDMALink::Decode(LINK, this); }
 
     //! Gets the LDMAChannel to which this descriptor belongs
     //! @warning Can be used only on the primary descriptor obtained from an LDMAChannel
@@ -403,6 +412,8 @@ public:
     ALWAYS_INLINE void Loop(uint32_t count) { Channel().LOOP = count; }
     //! Retrieves the primary LDMADescriptor of the LDMAChannel represented by this handle
     ALWAYS_INLINE volatile LDMADescriptor& RootDescriptor() { return Channel().Descriptor(); }
+    //! Retrieves the pointer to the linked LDMADescriptor of the LDMAChannel represented by this handle
+    ALWAYS_INLINE LDMADescriptor* LinkedDescriptor() { return (LDMADescriptor*)(Channel().LINK & ~3); }
     //! Waits for the DONE interrupt flag to be set on the LDMAChannel represented by this handle
     //! @note this flag is set by transfers having the Flags::SetDone flag, not when a transfer simply completes
     async(WaitForDoneFlag);
