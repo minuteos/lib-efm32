@@ -222,3 +222,6 @@ endif
 
 GECKO_SIGN_KEY_PUB ?= $(wildcard $(PROJECT_ROOT)app-sign-key.pem.pub)
 GECKO_CRYPT_KEY ?= $(wildcard $(PROJECT_ROOT)app-encrypt-key.txt)
+
+# default defined in platform.h
+SWO_FREQUENCY ?= 3200000
