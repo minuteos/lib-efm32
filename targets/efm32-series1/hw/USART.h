@@ -239,6 +239,11 @@ public:
     //! Unblocks data reception
     void RxUnblock() { CMD = USART_CMD_RXBLOCKDIS; }
 
+    //! Enables CTS checking for flow control
+    void FlowControlEnable() { EFM32_BITSET(CTRLX, USART_CTRLX_CTSEN); }
+    //! Disables CTS checking for flow control
+    void FlowControlDisable() { EFM32_BITCLR(CTRLX, USART_CTRLX_CTSEN); }
+
     //! Checks if data reception is enabled
     bool RxEnabled() { return STATUS & USART_STATUS_RXENS; }
     //! Checks if data reception is blocked (all received data is discarded)
