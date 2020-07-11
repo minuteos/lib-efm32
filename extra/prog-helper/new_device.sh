@@ -77,6 +77,11 @@ while waitForDevice; do
     echo "Flashing image from $IMAGE..."
     "$COMMANDER" flash -d "$DEVICE" "$IMAGE"
 
+    if [ -z "$NO_LOCK" ]; then
+        echo "Locking debug access..."
+        "$COMMANDER" device -d "$DEVICE" lock --debug enable
+    fi
+
     echo "Resetting device..."
     "$COMMANDER" device -d "$DEVICE" reset
 

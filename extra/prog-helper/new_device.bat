@@ -63,6 +63,12 @@ if "%NO_ERASE%" == "" (
     %COMMANDER% flash -d %DEVICE% %IMAGE%
     if errorlevel 1 goto error
 
+    if "%NO_ERASE%" == "" (
+        echo Locking debug access...
+        %COMMANDER% device -d %DEVICE% lock --debug enable
+        if errorlevel 1 goto error
+    )
+
     echo Resetting device...
     %COMMANDER% device -d %DEVICE% reset
     if errorlevel 1 goto error
