@@ -180,6 +180,12 @@ public:
     void EnableLDMA() { EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_LDMA); }
 #endif
 
+#ifdef CMU_HFBUSCLKEN0_GPCRC
+    bool GPCRCEnabled() { return HFBUSCLKEN0 & CMU_HFBUSCLKEN0_GPCRC; }
+    void EnableGPCRC() { EFM32_BITSET(HFBUSCLKEN0, CMU_HFBUSCLKEN0_GPCRC); }
+    void DisableGPCRC() { EFM32_BITCLR(HFBUSCLKEN0, CMU_HFBUSCLKEN0_GPCRC); }
+#endif
+
 private:
     void IRQHandler();
 };
