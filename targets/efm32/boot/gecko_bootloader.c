@@ -52,7 +52,7 @@ __attribute__((used, section(".bootloader.table"))) const MainBootloaderTable_t 
 
 #include <plugin/storage/btl_storage.c>
 
-#if GECKO_BOOTLOADER_STORAGE_TYPE == INTERNAL_FLASH
+#if !GECKO_BOOTLOADER_STORAGE_EXTERNAL
 
 #include <plugin/storage/internal_flash/btl_storage_internal_flash.c>
 

@@ -6,7 +6,13 @@
  * efm32/boot/gecko_bootloader_config.h
  */
 
+#pragma once
+
 #include <gecko_bootloader_config.h>
+
+#ifdef __cplusplus
+#include <gecko_bootloader_callbacks.h>
+#endif
 
 #ifndef GECKO_BOOTLOADER_ENFORCE_SECURE_BOOT
 #define GECKO_BOOTLOADER_ENFORCE_SECURE_BOOT    1
@@ -18,10 +24,6 @@
 
 #ifndef GECKO_BOOTLOADER_ENFORCE_SIGNED_UPGRADE
 #define GECKO_BOOTLOADER_ENFORCE_SIGNED_UPGRADE     GECKO_BOOTLOADER_ENFORCE_SECURE_BOOT
-#endif
-
-#ifndef GECKO_BOOTLOADER_STORAGE_TYPE
-#define GECKO_BOOTLOADER_STORAGE_TYPE           INTERNAL_FLASH
 #endif
 
 #ifndef GECKO_BOOTLOADER_APP_SPACE
