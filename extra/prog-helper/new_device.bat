@@ -10,7 +10,7 @@ if "%DEVICE%" == "" set DEVICE="bgm13p22"
 if "%COMMANDER%" == "" set COMMANDER="c:\SiliconLabs\SimplicityStudio\v4\developer\adapter_packs\commander\commander.exe"
 if "%IMAGE%" == "" for %%F in ("bin\*-signed.axf") do set IMAGE="%%~dpnF.s37"
 if "%IMAGE%" == "" for %%F in ("bin\*.axf") do set IMAGE="%%~dpnF.s37"
-set DEVICE_ARGS="-d %DEVICE% --speed=4000"
+set DEVICE_ARGS=-d %DEVICE% --speed=4000
 
 if not exist %IMAGE% (
     echo No image found for flashing
