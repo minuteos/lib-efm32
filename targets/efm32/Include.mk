@@ -216,7 +216,7 @@ endif
 .PHONY: flash-keys
 
 flash-keys:
-	$(SI_COMMANDER) flash --tokengroup znet $(SI_COMMANDER_FLASH_KEYS) -d $(SI_COMMANDER_DEVICE)
+	$(SI_COMMANDER) flash --speed 1000 --tokengroup znet $(SI_COMMANDER_FLASH_KEYS) -d $(SI_COMMANDER_DEVICE)
 
 endif
 
