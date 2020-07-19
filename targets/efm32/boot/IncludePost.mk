@@ -8,7 +8,7 @@
 
 # Disable signing and encryption enforcement if building without signing/encryption
 
-ifeq (bootloader,$(NAME))
+ifdef BOOTLOADER_BUILD
 
 ifeq (,$(GECKO_SIGN_KEY))
 

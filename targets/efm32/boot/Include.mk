@@ -6,7 +6,7 @@
 # efm32/boot/Include.mk
 #
 
-ifneq (bootloader,$(NAME))
+ifndef BOOTLOADER_BUILD
 
 COMPONENTS += build-gbl
 
