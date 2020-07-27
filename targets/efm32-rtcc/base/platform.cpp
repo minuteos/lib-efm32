@@ -11,6 +11,8 @@
 
 #include <base/base.h>
 
+#include <hw/CMU.h>
+
 OPTIMIZE uint32_t _efm32_mono_us()
 {
     if (!CMU->RTCCEnabled())

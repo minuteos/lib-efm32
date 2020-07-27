@@ -24,9 +24,3 @@ typedef uint32_t mono_t;
 #define EFM32_RTC   RTCC
 
 #include_next <base/platform.h>
-
-#ifdef __cplusplus
-
-#include <hw/RTCC.h>
-
-#endif
