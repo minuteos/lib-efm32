@@ -142,7 +142,9 @@ async_def(uint32_t dmaWaitMask)
     trx.Bidirectional(buffer);
     auto pair = BeginSyncTransferImpl(&trx, 1);
     f.dmaWaitMask = BIT(RES_PAIR_FIRST(pair)) | BIT(RES_PAIR_SECOND(pair));
+    PLATFORM_DEEP_SLEEP_DISABLE();
     await(LDMA->WaitForDoneMask, f.dmaWaitMask);
+    PLATFORM_DEEP_SLEEP_ENABLE();
 }
 async_end
 
@@ -151,7 +153,9 @@ async_def(uint32_t dmaWaitMask)
 {
     auto pair = BeginSyncTransferImpl(descriptors, count);
     f.dmaWaitMask = BIT(RES_PAIR_FIRST(pair)) | BIT(RES_PAIR_SECOND(pair));
+    PLATFORM_DEEP_SLEEP_DISABLE();
     await(LDMA->WaitForDoneMask, f.dmaWaitMask);
+    PLATFORM_DEEP_SLEEP_ENABLE();
 }
 async_end
 
@@ -161,7 +165,9 @@ async_def()
     ASSERT(RxEmpty());
 
     Transmit(data);
+    PLATFORM_DEEP_SLEEP_DISABLE();
     await_mask(STATUS, USART_STATUS_RXDATAV, USART_STATUS_RXDATAV);
+    PLATFORM_DEEP_SLEEP_ENABLE();
     uint32_t res = Receive();
 
     ASSERT(RxEmpty());

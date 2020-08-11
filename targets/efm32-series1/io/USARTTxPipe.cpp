@@ -56,7 +56,9 @@ async_def(
         f.desc.SetTransfer(span.Pointer(), &usart.TXDATA, span.Length(), LDMADescriptor::M2P | LDMADescriptor::UnitByte | LDMADescriptor::SetDone);
         f.dma.LinkLoad(f.desc);
         usart.TxEnable();
+        PLATFORM_DEEP_SLEEP_DISABLE();
         await(f.dma.WaitForDoneFlag);
+        PLATFORM_DEEP_SLEEP_ENABLE();
         MYTRACE(">> DONE");
         pipe.Advance(f.desc.Count());
     }

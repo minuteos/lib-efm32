@@ -71,6 +71,7 @@ async_def()
     MYDBG("Starting");
 
     dmapos = pipe.Position();
+    PLATFORM_DEEP_SLEEP_DISABLE();
 
     while (pipe.AvailableAfter(dmapos) || await(pipe.Allocate, blockSize))
     {
@@ -148,6 +149,7 @@ async_def()
     dma.RootDescriptor().Destination(NULL); // this wakes up the rx task
     FreeUnusedDescriptors(NULL);
     await_signal_off(dmaMonitor);
+    PLATFORM_DEEP_SLEEP_ENABLE();
     dma = LDMAChannelHandle();
     MYDBG("Finished");
 }
