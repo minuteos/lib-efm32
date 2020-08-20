@@ -163,8 +163,8 @@ public:
     bool CanStart() { auto state = State(); return (state == BusIdle || state == BusDataAck); }
 
 #ifdef EFM32_GPIO_LINEAR_INDEX
-    void ConfigureScl(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, ROUTEPEN, 1, 1u); }
-    void ConfigureSda(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, ROUTEPEN, 0, 0u); }
+    void ConfigureScl(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, ROUTEPEN, 1, BYTES(1, 29)[Index()]); }
+    void ConfigureSda(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, ROUTEPEN, 0, BYTES(0, 28)[Index()]); }
 #endif
 
     bool Idle();
