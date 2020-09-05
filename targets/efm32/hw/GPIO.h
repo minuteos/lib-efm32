@@ -17,6 +17,8 @@
 #include <kernel/kernel.h>
 #endif
 
+#include <hw/CMU.h>
+
 #include <em_gpio.h>        // let EMLIB detect the actual port configuration
 
 #if defined(_SILICON_LABS_32B_SERIES_1) && !defined(_EFM32_GIANT_FAMILY)
@@ -519,8 +521,25 @@ private:
     uint32_t EnableInterrupt(GPIOPinID id, unsigned risingFalling);
     void DisableInterrupt(uint32_t mask);
 
+    ALWAYS_INLINE void EnableTrace()
+    {
+#ifdef _SILICON_LABS_32B_SERIES_1
+    // enable default SWO pin (PF2)
+    MODMASK(P[5].MODEL, _GPIO_P_MODEL_MODE2_MASK, GPIO_P_MODEL_MODE2_PUSHPULL);
+    ROUTEPEN |= GPIO_ROUTEPEN_SWVPEN;
+#if EFM32_GPIO_DRIVE_CONTROL
+    P[5].CTRL = EFM32_GPIO_DRIVE_DEFAULT;
+#endif
+
+    // enable AUXHFRCO
+    CMU->EnableAUXHFRCO();
+    while (!CMU->AUXHFRCOReady());
+#endif
+    }
+
     friend class GPIOPin;
     friend class GPIOPort;
+    friend void _efm32_startup();
 };
 
 DEFINE_FLAG_ENUM(enum GPIOPin::Mode);

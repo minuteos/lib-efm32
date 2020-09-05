@@ -28,16 +28,7 @@ void _efm32_startup()
     // enable clock to GPIO
     CMU->EnableGPIO();
 
-    // enable default SWO pin (PF2)
-    MODMASK(GPIO->P[5].MODEL, _GPIO_P_MODEL_MODE2_MASK, GPIO_P_MODEL_MODE2_PUSHPULL);
-    GPIO->ROUTEPEN |= GPIO_ROUTEPEN_SWVPEN;
-#if EFM32_GPIO_DRIVE_CONTROL
-    GPIO->P[5].CTRL = EFM32_GPIO_DRIVE_DEFAULT;
-#endif
-
-    // enable AUXHFRCO
-    CMU->EnableAUXHFRCO();
-    while (!CMU->AUXHFRCOReady());
+    GPIO->EnableTrace();
 
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
     ITM->LAR = 0xC5ACCE55;   // unlock
