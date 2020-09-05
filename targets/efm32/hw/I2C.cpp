@@ -42,10 +42,15 @@ async_def(int retry)
 
     StateFlags flags = ClearFlags();
     DBGERR("resetting hung bus");
-    CTRL &= ~I2C_CTRL_EN;
-
     // re-enable with temporarily disabled arbitration so that we can fake start-stop conditions
+#ifdef I2C_EN_EN
+    EN = 0;
+    CTRL_SET = I2C_CTRL_ARBDIS;
+    EN = I2C_EN_EN;
+#else
+    CTRL &= ~I2C_CTRL_EN;
     CTRL |= I2C_CTRL_EN | I2C_CTRL_ARBDIS;
+#endif
     Abort();
     flags = ClearFlags();
 
@@ -63,7 +68,7 @@ async_def(int retry)
     }
 
     // re-enable arbitration, the bus now has to be idle
-    CTRL &= ~I2C_CTRL_ARBDIS;
+    EFM32_BITCLR_REG(CTRL, I2C_CTRL_ARBDIS);
     flags = ClearFlags();
     DBGERR("bus reset complete");
 }

@@ -12,7 +12,10 @@
 
 #include <base/Span.h>
 
+#include <hw/CMU.h>
 #include <hw/GPIO.h>
+
+#undef I2C
 
 #ifdef I2C0
 #undef I2C0
@@ -29,8 +32,12 @@ class I2C : public I2C_TypeDef
 public:
     enum Flags
     {
-        Enable = I2C_CTRL_EN,
-        SlaveEnable = I2C_CTRL_SLAVE,
+#ifdef I2C_CTRL_EN
+        MasterEnable = I2C_CTRL_EN,
+#else
+        MasterEnable = 0,
+#endif
+        SlaveEnable = MasterEnable | I2C_CTRL_SLAVE,
 
         AutoACK = I2C_CTRL_AUTOACK,
         AutoStopWhenEmpty = I2C_CTRL_AUTOSE,
@@ -40,25 +47,43 @@ public:
         GeneralCallEnable = I2C_CTRL_GCAMEN,
 
         TxInterruptLevelEmpty = I2C_CTRL_TXBIL_EMPTY,
+#ifdef I2C_CTRL_TXBIL_HALFFULL
         TxInterruptLevelHalfFull = I2C_CTRL_TXBIL_HALFFULL,
+#else
+        TxInterruptLevelHalfFull = I2C_CTRL_TXBIL_HALF_FULL,
+#endif
 
         ClockRatio4_4 = I2C_CTRL_CLHR_STANDARD,
         ClockRatio6_3 = I2C_CTRL_CLHR_ASYMMETRIC,
         ClockRatio11_6 = I2C_CTRL_CLHR_FAST,
 
         BusIdleTimeoutOff = I2C_CTRL_BITO_OFF,
+#ifdef I2C_CTRL_BITO_40PCC
         BusIdleTimeout40 = I2C_CTRL_BITO_40PCC,
         BusIdleTimeout80 = I2C_CTRL_BITO_80PCC,
         BusIdleTimeout160 = I2C_CTRL_BITO_160PCC,
+#else
+        BusIdleTimeout40 = I2C_CTRL_BITO_I2C40PCC,
+        BusIdleTimeout80 = I2C_CTRL_BITO_I2C80PCC,
+        BusIdleTimeout160 = I2C_CTRL_BITO_I2C160PCC,
+#endif
 
         BusIdleTimeoutEnable = I2C_CTRL_GIBITO,
 
         ClockLowTimeoutOff = I2C_CTRL_CLTO_OFF,
+#ifdef I2C_CTRL_CLTO_40PCC
         ClockLowTimeout40 = I2C_CTRL_CLTO_40PCC,
         ClockLowTimeout80 = I2C_CTRL_CLTO_80PCC,
         ClockLowTimeout160 = I2C_CTRL_CLTO_160PCC,
         ClockLowTimeout320 = I2C_CTRL_CLTO_320PCC,
         ClockLowTimeout1024 = I2C_CTRL_CLTO_1024PCC,
+#else
+        ClockLowTimeout40 = I2C_CTRL_CLTO_I2C40PCC,
+        ClockLowTimeout80 = I2C_CTRL_CLTO_I2C80PCC,
+        ClockLowTimeout160 = I2C_CTRL_CLTO_I2C160PCC,
+        ClockLowTimeout320 = I2C_CTRL_CLTO_I2C320PCC,
+        ClockLowTimeout1024 = I2C_CTRL_CLTO_I2C1024PCC,
+#endif
     };
 
     enum BusState
@@ -108,16 +133,27 @@ public:
     ALWAYS_INLINE int Index() const { return ((unsigned)this >> 10) & 0xF; }
 
     //! Enables peripheral clock
-	void EnableClock() { CMU->EnableI2C(Index()); }
+    void EnableClock() { CMU->EnableI2C(Index()); }
     //! Configures the peripheral
-    void Setup(Flags flags) { CTRL = flags; }
+    void Setup(Flags flags)
+    {
+        CTRL = flags;
+#ifdef I2C_EN_EN
+        EN = I2C_EN_EN;
+#endif
+    }
     //! Gets the bit period in clocks, depending on the configured flags
     int ClockPeriod() { return BYTES(8, 9, 17)[(CTRL & _I2C_CTRL_CLHR_MASK) >> _I2C_CTRL_CLHR_SHIFT]; }
     void OutputFrequency(uint32_t freq, int clkper = 0)
     {
         if (clkper == 0)
             clkper = ClockPeriod();
-        CLKDIV = (CMU->GetCoreFrequency() / freq - clkper + 1) / clkper;
+        auto clkfreq = CMU->GetCoreFrequency();
+#ifdef I2C_EN_EN
+        if (!Index())
+            clkfreq >>= 1;   // I2C0 is clocked by LSPCLK which is /2
+#endif
+        CLKDIV = (clkfreq / freq - clkper + 1) / clkper;
     }
 
     IRQn_Type IRQn() const { return LOOKUP_TABLE(IRQn_Type, I2C0_IRQn, I2C1_IRQn)[Index()]; }
@@ -156,7 +192,7 @@ public:
     bool WillContinue() { return STATUS & I2C_STATUS_PCONT; }
     bool WillAbort() { return STATUS & I2C_STATUS_PABORT; }
 
-    StateFlags ClearFlags(uint ignore = 0) { return IFC & ~ignore; }
+    StateFlags ClearFlags(uint ignore = 0) { return EFM32_IFC_READ(this) & ~ignore; }
 
     void Send(uint b) { TXDATA = b; }
     uint Receive() { return RXDATA; }
@@ -165,6 +201,9 @@ public:
 #ifdef EFM32_GPIO_LINEAR_INDEX
     void ConfigureScl(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, ROUTEPEN, 1, BYTES(1, 29)[Index()]); }
     void ConfigureSda(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, ROUTEPEN, 0, BYTES(0, 28)[Index()]); }
+#elif defined(_SILICON_LABS_32B_SERIES_2)
+    void ConfigureScl(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(I2C, SCL)); }
+    void ConfigureSda(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(I2C, SDA)); }
 #endif
 
     bool Idle();
