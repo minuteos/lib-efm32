@@ -23,7 +23,9 @@
 #include <../src/em_gpio.c>
 #include <../src/em_usart.c>
 #include <../src/em_crypto.c>
+#if _SILICON_LABS_32B_SERIES < 2
 #include <../src/em_letimer.c>
+#endif
 #include <../src/em_lcd.c>
 #include <../src/em_qspi.c>
 #include <../src/em_opamp.c>
