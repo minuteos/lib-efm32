@@ -39,4 +39,18 @@ private:
     bool IsErased(const volatile void* page);
 
     void TryErasePageHelper();
+
+    ALWAYS_INLINE void Configure()
+    {
+#ifdef _SILICON_LABS_32B_SERIES_1
+        // use the "clear interrupts on read" semantics (reading IFC is the same as IFC = IF)
+        // also enable bus faults when accessing disabled peripherals
+        // silently ignoring these errors sometimes causes very hard to find bugs
+        MSC->LOCK = MSC_LOCK_LOCKKEY_UNLOCK;
+        MSC->CTRL |= MSC_CTRL_IFCREADCLEAR | MSC_CTRL_CLKDISFAULTEN;
+        MSC->LOCK = MSC_LOCK_LOCKKEY_LOCK;
+#endif
+    }
+
+    friend void _efm32_c_startup();
 };

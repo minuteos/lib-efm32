@@ -14,6 +14,7 @@
 #include <hw/CMU.h>
 #include <hw/EMU.h>
 #include <hw/RMU.h>
+#include <hw/MSC.h>
 #include <hw/GPIO.h>
 
 void _efm32_startup()
@@ -55,14 +56,7 @@ void _efm32_c_startup()
     WDOG0->Configure(2000);
 #endif
 
-    // use the "clear interrupts on read" semantics (reading IFC is the same as IFC = IF)
-    // also enable bus faults when accessing disabled peripherals
-    // silently ignoring these errors sometimes causes very hard to find bugs
-    if (MSC->LOCK & MSC_LOCK_LOCKKEY_LOCKED)
-        MSC->LOCK = MSC_LOCK_LOCKKEY_UNLOCK;
-    MSC->CTRL |= MSC_CTRL_IFCREADCLEAR | MSC_CTRL_CLKDISFAULTEN;
-    MSC->LOCK = MSC_LOCK_LOCKKEY_LOCK;
-
+    MSC->Configure();
     EMU->Configure();
     CMU->Configure();
     RMU->Configure();
