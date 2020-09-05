@@ -89,7 +89,11 @@ public:
         BlockSize1024 = LDMA_CH_CTRL_BLOCKSIZE_UNIT1024,
         BlockSizeAll = LDMA_CH_CTRL_BLOCKSIZE_ALL,
 
+#ifdef LDMA_CH_CTRL_DONEIFSEN
         SetDone = LDMA_CH_CTRL_DONEIFSEN,
+#else
+        SetDone = LDMA_CH_CTRL_DONEIEN,
+#endif
 
         TransferModeBlock = LDMA_CH_CTRL_REQMODE_BLOCK,
         TransferModeAll = LDMA_CH_CTRL_REQMODE_ALL,
@@ -201,6 +205,8 @@ public:
     ALWAYS_INLINE void Link(LDMALink link) volatile { LINK = link.value; }
     //! Gets the descriptor this one links to
     ALWAYS_INLINE LDMADescriptor* LinkedDescriptor() volatile const { return LDMALink::Decode(LINK, this); }
+    //! Sets the done interrupt flag after the descriptor completes
+    ALWAYS_INLINE void DoneInterrupt(bool set = true) volatile { CTRL |= Flags::SetDone; }
 
     //! Gets the LDMAChannel to which this descriptor belongs
     //! @warning Can be used only on the primary descriptor obtained from an LDMAChannel
@@ -224,58 +230,90 @@ public:
     LDMADescriptor& Descriptor() { return *(LDMADescriptor*)&CTRL; }
 
 private:
+#ifdef LDMAXBAR
+#define LDMA_SOURCESEL(src) _LDMAXBAR_CH_REQSEL_SOURCESEL_ ## src
+#define LDMA_SIGSEL(src)    _LDMAXBAR_CH_REQSEL_SIGSEL_ ## src
+#else
+#define LDMA_SOURCESEL(src) _LDMA_CH_REQSEL_SOURCESEL_ ## src
+#define LDMA_SIGSEL(src)    _LDMA_CH_REQSEL_SIGSEL_ ## src
+#endif
+
     enum Source
     {
-        SourceNone =    _LDMA_CH_REQSEL_SOURCESEL_NONE,
-        SourcePRS =     _LDMA_CH_REQSEL_SOURCESEL_PRS,
-        SourceADC0 =    _LDMA_CH_REQSEL_SOURCESEL_ADC0,
-#ifdef _LDMA_CH_REQSEL_SOURCESEL_ADC1
-        SourceADC1 =    _LDMA_CH_REQSEL_SOURCESEL_ADC1,
+        SourceNone =    LDMA_SOURCESEL(NONE),
+#ifdef _LDMA_CH_REQSEL_SOURCESEL_PRS
+        SourcePRS =     LDMA_SOURCESEL(PRS),
+#else
+        SourcePRS =     LDMA_SOURCESEL(LDMAXBAR),
 #endif
-#ifdef _LDMA_CH_REQSEL_SOURCESEL_VDAC0
-        SourceVDAC0 =   _LDMA_CH_REQSEL_SOURCESEL_VDAC0,
+#if ADC_COUNT
+        SourceADC0 =    LDMA_SOURCESEL(ADC0),
 #endif
-        SourceUSART0 =  _LDMA_CH_REQSEL_SOURCESEL_USART0,
-        SourceUSART1 =  _LDMA_CH_REQSEL_SOURCESEL_USART1,
-#ifdef _LDMA_CH_REQSEL_SOURCESEL_USART2
-        SourceUSART2 =  _LDMA_CH_REQSEL_SOURCESEL_USART2,
+#if ADC_COUNT > 1
+        SourceADC1 =    LDMA_SOURCESEL(ADC0),
 #endif
-#ifdef _LDMA_CH_REQSEL_SOURCESEL_USART3
-        SourceUSART3 =  _LDMA_CH_REQSEL_SOURCESEL_USART3,
+#if IADC_COUNT
+        SourceIADC0 =   LDMA_SOURCESEL(IADC0),
 #endif
-#ifdef _LDMA_CH_REQSEL_SOURCESEL_USART4
-        SourceUSART4 =  _LDMA_CH_REQSEL_SOURCESEL_USART4,
+#if VDAC_COUNT
+        SourceVDAC0 =   LDMA_SOURCESEL(VDAC0),
 #endif
-#ifdef _LDMA_CH_REQSEL_SOURCESEL_USART5
-        SourceUSART5 =  _LDMA_CH_REQSEL_SOURCESEL_USART5,
+        SourceUSART0 =  LDMA_SOURCESEL(USART0),
+        SourceUSART1 =  LDMA_SOURCESEL(USART1),
+#if USART_COUNT > 2
+        SourceUSART2 =  LDMA_SOURCESEL(USART2),
 #endif
-#ifdef _LDMA_CH_REQSEL_SOURCESEL_UART1
-        SourceUART0 =   _LDMA_CH_REQSEL_SOURCESEL_UART0,
-        SourceUART1 =   _LDMA_CH_REQSEL_SOURCESEL_UART1,
+#if USART_COUNT > 3
+        SourceUSART3 =  LDMA_SOURCESEL(USART3),
 #endif
-        SourceLEUART0 = _LDMA_CH_REQSEL_SOURCESEL_LEUART0,
-#ifdef _LDMA_CH_REQSEL_SOURCESEL_LEUART1
-        SourceLEUART1 = _LDMA_CH_REQSEL_SOURCESEL_LEUART1,
+#if USART_COUNT > 4
+        SourceUSART4 =  LDMA_SOURCESEL(USART4),
 #endif
-        SourceI2C0 =    _LDMA_CH_REQSEL_SOURCESEL_I2C0,
-#ifdef _LDMA_CH_REQSEL_SOURCESEL_I2C2
-        SourceI2C1 =    _LDMA_CH_REQSEL_SOURCESEL_I2C1,
-        SourceI2C2 =    _LDMA_CH_REQSEL_SOURCESEL_I2C2,
+#if USART_COUNT > 5
+        SourceUSART5 =  LDMA_SOURCESEL(USART5),
 #endif
-        SourceTIMER0 =  _LDMA_CH_REQSEL_SOURCESEL_TIMER0,
-        SourceTIMER1 =  _LDMA_CH_REQSEL_SOURCESEL_TIMER1,
-#ifdef _LDMA_CH_REQSEL_SOURCESEL_TIMER6
-        SourceTIMER2 =  _LDMA_CH_REQSEL_SOURCESEL_TIMER2,
-        SourceTIMER3 =  _LDMA_CH_REQSEL_SOURCESEL_TIMER3,
-        SourceTIMER4 =  _LDMA_CH_REQSEL_SOURCESEL_TIMER4,
-        SourceTIMER5 =  _LDMA_CH_REQSEL_SOURCESEL_TIMER5,
-        SourceTIMER6 =  _LDMA_CH_REQSEL_SOURCESEL_TIMER6,
+#if UART_COUNT
+        SourceUART0 =   LDMA_SOURCESEL(UART0),
+        SourceUART1 =   LDMA_SOURCESEL(UART1),
 #endif
-        SourceMSC    =  _LDMA_CH_REQSEL_SOURCESEL_MSC,
+#if LEUART_COUNT
+        SourceLEUART0 = LDMA_SOURCESEL(LEUART0),
+#endif
+#if LEUART_COUNT > 1
+        SourceLEUART1 = LDMA_SOURCESEL(LEUART1),
+#endif
+        SourceI2C0 =    LDMA_SOURCESEL(I2C0),
+#if IDC_COUNT > 1
+        SourceI2C1 =    LDMA_SOURCESEL(I2C1),
+#endif
+#if IDC_COUNT > 2
+        SourceI2C2 =    LDMA_SOURCESEL(I2C2),
+#endif
+        SourceTIMER0 =  LDMA_SOURCESEL(TIMER0),
+        SourceTIMER1 =  LDMA_SOURCESEL(TIMER1),
+#if TIMER_COUNT > 2
+        SourceTIMER2 =  LDMA_SOURCESEL(TIMER2),
+#endif
+#if TIMER_COUNT > 3
+        SourceTIMER3 =  LDMA_SOURCESEL(TIMER3),
+#endif
+#if TIMER_COUNT > 4
+        SourceTIMER4 =  LDMA_SOURCESEL(TIMER4),
+#endif
+#if TIMER_COUNT > 5
+        SourceTIMER5 =  LDMA_SOURCESEL(TIMER5),
+#endif
+#if TIMER_COUNT > 6
+        SourceTIMER6 =  LDMA_SOURCESEL(TIMER6),
+#endif
+        SourceMSC    =  LDMA_SOURCESEL(MSC),
 #ifdef _LDMA_CH_REQSEL_SOURCESEL_CRYPTO0
-        SourceCRYPTO =  _LDMA_CH_REQSEL_SOURCESEL_CRYPTO0,
+        SourceCRYPTO =  LDMA_SOURCESEL(CRYPTO0),
 #elif defined(_LDMA_CH_REQSEL_SOURCESEL_CRYPTO)
-        SourceCRYPTO =  _LDMA_CH_REQSEL_SOURCESEL_CRYPTO,
+        SourceCRYPTO =  LDMA_SOURCESEL(CRYPTO),
+#endif
+#if PDM_COUNT
+        SourcePDM0   =  LDMA_SOURCESEL(PDM),
 #endif
     };
 
@@ -294,57 +332,84 @@ public:
         DestinationDecrement = LDMA_CH_CFG_DSTINCSIGN_NEGATIVE,
     };
 
+#if ADC_COUNT
     enum struct ADCSignal
     {
-        Single = LDMA_CH_REQSEL_SIGSEL_ADC0SINGLE,
-        Scan = LDMA_CH_REQSEL_SIGSEL_ADC0SCAN,
+        Single = LDMA_SIGSEL(ADC0SINGLE),
+        Scan = LDMA_SIGSEL(ADC0SCAN),
     };
+#endif
+
+#if IADC_COUNT
+    enum struct IADCSignal
+    {
+        Single = LDMA_SIGSEL(IADC0IADC_SINGLE),
+        Scan = LDMA_SIGSEL(IADC0IADC_SCAN),
+    };
+#endif
 
     enum struct USARTSignal
     {
-        RxDataValid = LDMA_CH_REQSEL_SIGSEL_USART0RXDATAV,
-        TxFree = LDMA_CH_REQSEL_SIGSEL_USART0TXBL,
-        TxEmpty = LDMA_CH_REQSEL_SIGSEL_USART0TXEMPTY,
-        RxDataValidRight = LDMA_CH_REQSEL_SIGSEL_USART1RXDATAVRIGHT,
-        TxFreeRight = LDMA_CH_REQSEL_SIGSEL_USART1TXBLRIGHT,
+        RxDataValid = LDMA_SIGSEL(USART0RXDATAV),
+        TxFree = LDMA_SIGSEL(USART0TXBL),
+        TxEmpty = LDMA_SIGSEL(USART0TXEMPTY),
+        RxDataValidRight = LDMA_SIGSEL(USART1RXDATAVRIGHT),
+        TxFreeRight = LDMA_SIGSEL(USART1TXBLRIGHT),
     };
 
 #if UART_COUNT
     enum struct UARTSignal
     {
-        RxDataValid = LDMA_CH_REQSEL_SIGSEL_UART0RXDATAV,
-        TxFree = LDMA_CH_REQSEL_SIGSEL_UART0TXBL,
-        TxEmpty = LDMA_CH_REQSEL_SIGSEL_UART0TXEMPTY,
+        RxDataValid = LDMA_SIGSEL(UART0RXDATAV),
+        TxFree = LDMA_SIGSEL(UART0TXBL),
+        TxEmpty = LDMA_SIGSEL(UART0TXEMPTY),
     };
 #endif
 
+#if LEUART_COUNT
     enum struct LEUARTSignal
     {
-        RxDataValid = LDMA_CH_REQSEL_SIGSEL_LEUART0RXDATAV,
-        TxFree = LDMA_CH_REQSEL_SIGSEL_LEUART0TXBL,
-        TxEmpty = LDMA_CH_REQSEL_SIGSEL_LEUART0TXEMPTY,
+        RxDataValid = LDMA_SIGSEL(LEUART0RXDATAV),
+        TxFree = LDMA_SIGSEL(LEUART0TXBL),
+        TxEmpty = LDMA_SIGSEL(LEUART0TXEMPTY),
     };
+#endif
 
     enum struct I2CSignal
     {
-        RxDataValid = LDMA_CH_REQSEL_SIGSEL_I2C0RXDATAV,
-        TxFree = LDMA_CH_REQSEL_SIGSEL_I2C0TXBL,
+        RxDataValid = LDMA_SIGSEL(I2C0RXDATAV),
+        TxFree = LDMA_SIGSEL(I2C0TXBL),
     };
 
     enum struct TIMERSignal
     {
-        UnderOverflow = LDMA_CH_REQSEL_SIGSEL_TIMER0UFOF,
-        CC0 = LDMA_CH_REQSEL_SIGSEL_TIMER0CC0,
-        CC1 = LDMA_CH_REQSEL_SIGSEL_TIMER0CC1,
-        CC2 = LDMA_CH_REQSEL_SIGSEL_TIMER0CC2,
-        CC3 = LDMA_CH_REQSEL_SIGSEL_TIMER1CC3,
+        UnderOverflow = LDMA_SIGSEL(TIMER0UFOF),
+        CC0 = LDMA_SIGSEL(TIMER0CC0),
+        CC1 = LDMA_SIGSEL(TIMER0CC1),
+        CC2 = LDMA_SIGSEL(TIMER0CC2),
+#ifdef _LDMAXBAR_CH_REQSEL_SIGSEL_TIMER1CC3
+        CC3 = LDMA_SIGSEL(TIMER1CC3),
+#endif
     };
 
+#if VDAC_COUNT
     enum VDACSignal
     {
-        CH0 = LDMA_CH_REQSEL_SIGSEL_VDAC0CH0,
-        CH1 = LDMA_CH_REQSEL_SIGSEL_VDAC0CH1,
+        CH0 = LDMA_SIGSEL(VDAC0CH0),
+        CH1 = LDMA_SIGSEL(VDAC0CH1),
     };
+#endif
+
+#if PDM_COUNT
+    enum PDMSignal
+    {
+        RxDataValid = LDMA_SIGSEL(PDMRXDATAV),
+    };
+#endif
+
+#undef LDMA_SOURCESEL
+#undef LDMA_SIGSEL
+
 };
 
 //! A handle representing an LDMAChannel
@@ -354,6 +419,12 @@ private:
     constexpr LDMAChannelHandle(unsigned index) : index(index) {}
 
     unsigned index;
+
+#ifdef LDMAXBAR
+    volatile uint32_t& REQSEL() { return LDMAXBAR->CH[index].REQSEL; }
+#else
+    volatile uint32_t& REQSEL() { return Channel().REQSEL; }
+#endif
 
 public:
     constexpr LDMAChannelHandle() : index(~0u) {}
@@ -419,26 +490,34 @@ public:
     async(WaitForDoneFlag);
 
     //! Disables source for the LDMAChannel represented by this handle, allowing software triggered usage only
-    ALWAYS_INLINE void SourceNone() { Channel().REQSEL = 0; }
+    ALWAYS_INLINE void SourceNone() { REQSEL() = 0; }
     //! Configures the LDMAChannel represented by this handle for the specified PRS channel
-    ALWAYS_INLINE void SourcePRS(unsigned index) { ASSERT(index <= 1); Channel().REQSEL = LDMAChannel::SourcePRS << 16 | index; }
+    ALWAYS_INLINE void SourcePRS(unsigned index) { ASSERT(index <= 1); REQSEL() = LDMAChannel::SourcePRS << 16 | index; }
+#if ADC_COUNT
     //! Configures the LDMAChannel represented by this handle for the specified ADC peripheral and signal
-    ALWAYS_INLINE void SourceADCChannel(unsigned index, LDMAChannel::ADCSignal sig) { ASSERT(index < ADC_COUNT); Channel().REQSEL = (LDMAChannel::SourceADC0 + index) << 16 | uint32_t(sig); }
+    ALWAYS_INLINE void SourceADCChannel(unsigned index, LDMAChannel::ADCSignal sig) { ASSERT(index < ADC_COUNT); REQSEL() = (LDMAChannel::SourceADC0 + index) << 16 | uint32_t(sig); }
+#endif
+#if IADC_COUNT
+    //! Configures the LDMAChannel represented by this handle for the specified IADC peripheral and signal
+    ALWAYS_INLINE void SourceIADCChannel(unsigned index, LDMAChannel::IADCSignal sig) { ASSERT(index < IADC_COUNT); REQSEL() = (LDMAChannel::SourceIADC0 + index) << 16 | uint32_t(sig); }
+#endif
     //! Configures the LDMAChannel represented by this handle for the specified USART peripheral and signal
-    ALWAYS_INLINE void SourceUSARTChannel(unsigned index, LDMAChannel::USARTSignal sig) { ASSERT(index < USART_COUNT); Channel().REQSEL = (LDMAChannel::SourceUSART0 + index) << 16 | uint32_t(sig); }
+    ALWAYS_INLINE void SourceUSARTChannel(unsigned index, LDMAChannel::USARTSignal sig) { ASSERT(index < USART_COUNT); REQSEL() = (LDMAChannel::SourceUSART0 + index) << 16 | uint32_t(sig); }
 #if UART_COUNT
     //! Configures the LDMAChannel represented by this handle for the specified UART peripheral and signal
-    ALWAYS_INLINE void SourceUARTChannel(unsigned index, LDMAChannel::UARTSignal sig) { ASSERT(index < UART_COUNT); Channel().REQSEL = (LDMAChannel::SourceUART0 + index) << 16 | uint32_t(sig); }
+    ALWAYS_INLINE void SourceUARTChannel(unsigned index, LDMAChannel::UARTSignal sig) { ASSERT(index < UART_COUNT); REQSEL() = (LDMAChannel::SourceUART0 + index) << 16 | uint32_t(sig); }
 #endif
+#if LEUART_COUNT
     //! Configures the LDMAChannel represented by this handle for the specified LEUART peripheral and signal
-    ALWAYS_INLINE void SourceLEUARTChannel(unsigned index, LDMAChannel::LEUARTSignal sig) { ASSERT(index < LEUART_COUNT); Channel().REQSEL = (LDMAChannel::SourceLEUART0 + index) << 16 | uint32_t(sig); }
+    ALWAYS_INLINE void SourceLEUARTChannel(unsigned index, LDMAChannel::LEUARTSignal sig) { ASSERT(index < LEUART_COUNT); REQSEL() = (LDMAChannel::SourceLEUART0 + index) << 16 | uint32_t(sig); }
+#endif
     //! Configures the LDMAChannel represented by this handle for the specified I2C peripheral and signal
-    ALWAYS_INLINE void SourceI2CChannel(unsigned index, LDMAChannel::I2CSignal sig) { ASSERT(index < I2C_COUNT); Channel().REQSEL = (LDMAChannel::SourceI2C0 + index) << 16 | uint32_t(sig); }
+    ALWAYS_INLINE void SourceI2CChannel(unsigned index, LDMAChannel::I2CSignal sig) { ASSERT(index < I2C_COUNT); REQSEL() = (LDMAChannel::SourceI2C0 + index) << 16 | uint32_t(sig); }
     //! Configures the LDMAChannel represented by this handle for the specified TIMER peripheral and signal
-    ALWAYS_INLINE void SourceTIMERChannel(unsigned index, LDMAChannel::TIMERSignal sig) { ASSERT(index < TIMER_COUNT); Channel().REQSEL = (LDMAChannel::SourceTIMER0 + index) << 16 | uint32_t(sig); }
+    ALWAYS_INLINE void SourceTIMERChannel(unsigned index, LDMAChannel::TIMERSignal sig) { ASSERT(index < TIMER_COUNT); REQSEL() = (LDMAChannel::SourceTIMER0 + index) << 16 | uint32_t(sig); }
 #if VDAC_COUNT
     //! Configures the LDMAChannel represented by this handle for the specified VDAC peripheral and signal
-    ALWAYS_INLINE void SourceVDACChannel(unsigned index, LDMAChannel::VDACSignal sig) { ASSERT(index < VDAC_COUNT); Channel().REQSEL = (LDMAChannel::SourceVDAC0 + index) << 16 | uint32_t(sig); }
+    ALWAYS_INLINE void SourceVDACChannel(unsigned index, LDMAChannel::VDACSignal sig) { ASSERT(index < VDAC_COUNT); REQSEL() = (LDMAChannel::SourceVDAC0 + index) << 16 | uint32_t(sig); }
 #endif
 
     friend class LDMAController;
@@ -454,10 +533,21 @@ class LDMAController : public LDMA_TypeDef
 
 private:
     LDMAChannelHandle GetChannel(uint32_t srcDef, bool reuse = true);
+#ifdef LDMAXBAR
+    static volatile uint32_t& REQSEL(unsigned index) { return LDMAXBAR->CH[index].REQSEL; }
+#else
+    volatile uint32_t& REQSEL(unsigned index) { return CH[index].REQSEL; }
+#endif
 
 public:
     //! Enables the clock to the LDMA peripheral
-    void EnableClock() const { CMU->EnableLDMA(); }
+    void EnableClock()
+    {
+        CMU->EnableLDMA();
+#ifdef LDMA_EN_EN
+        EN = LDMA_EN_EN;    // separate enable of the peripheral itself
+#endif
+    }
 
     //! Gets the LDMAChannelHandle for the channel with the specified index
     LDMAChannelHandle GetChannelByIndex(unsigned n) { return n; }
@@ -465,16 +555,24 @@ public:
     LDMAChannelHandle GetTriggeredChannel() { return GetChannel(LDMAChannel::SourceNone << 16 | 1, false); }
     //! Allocates a LDMAChannelHandle for the specified PRS channel, optionally reusing a previously allocated channel
     LDMAChannelHandle GetPRSChannel(unsigned index, bool reuse = true) { return GetChannel(LDMAChannel::SourcePRS << 16 | index, reuse); }
+#if ADC_COUNT
     //! Allocates a LDMAChannelHandle for the specified ADC peripheral and signal, optionally reusing a previously allocated channel
     LDMAChannelHandle GetADCChannel(unsigned index, LDMAChannel::ADCSignal sig, bool reuse = true) { ASSERT(index < ADC_COUNT); return GetChannel((LDMAChannel::SourceADC0 + index) << 16 | uint32_t(sig), reuse); }
+#endif
+#if IADC_COUNT
+    //! Allocates a LDMAChannelHandle for the specified ADC peripheral and signal, optionally reusing a previously allocated channel
+    LDMAChannelHandle GetIADCChannel(unsigned index, LDMAChannel::IADCSignal sig, bool reuse = true) { ASSERT(index < IADC_COUNT); return GetChannel((LDMAChannel::SourceIADC0 + index) << 16 | uint32_t(sig), reuse); }
+#endif
     //! Allocates a LDMAChannelHandle for the specified USART peripheral and signal, optionally reusing a previously allocated channel
     LDMAChannelHandle GetUSARTChannel(unsigned index, LDMAChannel::USARTSignal sig, bool reuse = true) { ASSERT(index < USART_COUNT); return GetChannel((LDMAChannel::SourceUSART0 + index) << 16 | uint32_t(sig), reuse); }
 #if UART_COUNT
     //! Allocates a LDMAChannelHandle for the specified UART peripheral and signal, optionally reusing a previously allocated channel
     LDMAChannelHandle GetUARTChannel(uint index, LDMAChannel::UARTSignal sig, bool reuse = true) { ASSERT(index < UART_COUNT); return GetChannel((LDMAChannel::SourceUART0 + index) << 16 | uint32_t(sig), reuse); }
 #endif
+#if LEUART_COUNT
     //! Allocates a LDMAChannelHandle for the specified LEUART peripheral and signal, optionally reusing a previously allocated channel
     LDMAChannelHandle GetLEUARTChannel(unsigned index, LDMAChannel::LEUARTSignal sig, bool reuse = true) { ASSERT(index < LEUART_COUNT); return GetChannel((LDMAChannel::SourceLEUART0 + index) << 16 | uint32_t(sig), reuse); }
+#endif
     //! Allocates a LDMAChannelHandle for the specified I2C peripheral and signal, optionally reusing a previously allocated channel
     LDMAChannelHandle GetI2CChannel(unsigned index, LDMAChannel::I2CSignal sig, bool reuse = true) { ASSERT(index < I2C_COUNT); return GetChannel((LDMAChannel::SourceI2C0 + index) << 16 | uint32_t(sig), reuse); }
     //! Allocates a LDMAChannelHandle for the specified TIMER peripheral and signal, optionally reusing a previously allocated channel
@@ -483,26 +581,35 @@ public:
     //! Allocates a LDMAChannelHandle for the specified VDAC peripheral and signal, optionally reusing a previously allocated channel
     LDMAChannelHandle GetVDACChannel(unsigned index, LDMAChannel::VDACSignal sig, bool reuse = true) { ASSERT(index < VDAC_COUNT); return GetChannel((LDMAChannel::SourceVDAC0 + index) << 16 | uint32_t(sig), reuse); }
 #endif
+#if PDM_COUNT
+    //! Allocates a LDMAChannelHandle for the specified PDM peripheral and signal, optionally reusing a previously allocated channel
+    LDMAChannelHandle GetPDMChannel(unsigned index, LDMAChannel::PDMSignal sig, bool reuse = true) { ASSERT(index < PDM_COUNT); return GetChannel((LDMAChannel::SourcePDM0 + index) << 16 | uint32_t(sig), reuse); }
+#endif
 
     //! Gets the number of unused channels that can be still allocated
-    unsigned FreeChannels() const;
+    unsigned FreeChannels();
     //! Waits for all the channels specified in the mask to set their done flag
     async(WaitForDoneMask, uint32_t mask);
 };
 
 ALWAYS_INLINE LDMAChannel& LDMAChannelHandle::Channel() { return *(LDMAChannel*)&LDMA->CH[index]; }
 
-ALWAYS_INLINE void LDMAChannelHandle::SetSync() { EFM32_BITSET(LDMA->SYNC, BIT(index)); }
-ALWAYS_INLINE void LDMAChannelHandle::ClearSync() { EFM32_BITCLR(LDMA->SYNC, BIT(index)); }
+#ifdef _LDMA_SYNCSWSET_MASK
+ALWAYS_INLINE void LDMAChannelHandle::SetSync() { LDMA->SYNCSWSET = BIT(index); }
+ALWAYS_INLINE void LDMAChannelHandle::ClearSync() { LDMA->SYNCSWCLR = BIT(index); }
+#else
+ALWAYS_INLINE void LDMAChannelHandle::SetSync() { EFM32_BITSET_REG(LDMA->SYNC, BIT(index)); }
+ALWAYS_INLINE void LDMAChannelHandle::ClearSync() { EFM32_BITCLR_REG(LDMA->SYNC, BIT(index)); }
+#endif
 
-ALWAYS_INLINE void LDMAChannelHandle::Enable() { EFM32_BITSET(LDMA->CHEN, BIT(index)); }
-ALWAYS_INLINE void LDMAChannelHandle::Disable() { EFM32_BITCLR(LDMA->CHEN, BIT(index)); }
+ALWAYS_INLINE void LDMAChannelHandle::Enable() { EFM32_BITSET_REG(LDMA->CHEN, BIT(index)); }
+ALWAYS_INLINE void LDMAChannelHandle::Disable() { EFM32_BITCLR_REG(LDMA->CHEN, BIT(index)); }
 ALWAYS_INLINE bool LDMAChannelHandle::IsEnabled() const { return GETBIT(LDMA->CHEN, index); }
 
 ALWAYS_INLINE bool LDMAChannelHandle::IsBusy() const { return GETBIT(LDMA->CHBUSY, index); }
 
-ALWAYS_INLINE void LDMAChannelHandle::ClearDone() { EFM32_BITCLR(LDMA->CHDONE, BIT(index)); LDMA->IFC = BIT(index); }
-ALWAYS_INLINE void LDMAChannelHandle::SetDone() { EFM32_BITSET(LDMA->CHDONE, BIT(index)); LDMA->IFS = BIT(index); }
+ALWAYS_INLINE void LDMAChannelHandle::ClearDone() { EFM32_BITCLR_REG(LDMA->CHDONE, BIT(index)); EFM32_IFC(LDMA) = BIT(index); }
+ALWAYS_INLINE void LDMAChannelHandle::SetDone() { EFM32_BITSET_REG(LDMA->CHDONE, BIT(index)); EFM32_IFS(LDMA) = BIT(index); }
 ALWAYS_INLINE bool LDMAChannelHandle::IsDone() const { return GETBIT(LDMA->CHDONE, index); }
 
 ALWAYS_INLINE void LDMAChannelHandle::Request() { LDMA->SWREQ = BIT(index); }
@@ -510,8 +617,8 @@ ALWAYS_INLINE void LDMAChannelHandle::LinkLoad(LDMADescriptor& desc) { RootDescr
 ALWAYS_INLINE void LDMAChannelHandle::LinkLoad() { LDMA->LINKLOAD = BIT(index); }
 ALWAYS_INLINE void LDMAChannelHandle::RequestClear() { LDMA->REQCLEAR = BIT(index); }
 
-ALWAYS_INLINE void LDMAChannelHandle::RequestsEnable() { EFM32_BITCLR(LDMA->REQDIS, BIT(index)); }
-ALWAYS_INLINE void LDMAChannelHandle::RequestsDisable() { EFM32_BITSET(LDMA->REQDIS, BIT(index)); }
+ALWAYS_INLINE void LDMAChannelHandle::RequestsEnable() { EFM32_BITCLR_REG(LDMA->REQDIS, BIT(index)); }
+ALWAYS_INLINE void LDMAChannelHandle::RequestsDisable() { EFM32_BITSET_REG(LDMA->REQDIS, BIT(index)); }
 ALWAYS_INLINE bool LDMAChannelHandle::RequestsDisabled() const { return !GETBIT(LDMA->REQDIS, index); }
 
 ALWAYS_INLINE bool LDMAChannelHandle::RequestsPending() const { return GETBIT(LDMA->REQPEND, index); }

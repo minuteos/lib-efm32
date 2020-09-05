@@ -16,7 +16,7 @@ LDMAChannelHandle LDMAController::GetChannel(uint32_t srcDef, bool reuse)
     {
         for (unsigned i = 0; i < countof(CH); i++)
         {
-            if (CH[i].REQSEL == srcDef)
+            if (REQSEL(i) == srcDef)
             {
                 return i;
             }
@@ -25,9 +25,9 @@ LDMAChannelHandle LDMAController::GetChannel(uint32_t srcDef, bool reuse)
 
     for (unsigned i = 0; i < countof(CH); i++)
     {
-        if (CH[i].REQSEL == 0)
+        if (REQSEL(i) == 0)
         {
-            CH[i].REQSEL = srcDef;
+            REQSEL(i) = srcDef;
             return i;
         }
     }
@@ -36,7 +36,7 @@ LDMAChannelHandle LDMAController::GetChannel(uint32_t srcDef, bool reuse)
     return ~0u;
 }
 
-unsigned LDMAController::FreeChannels() const
+unsigned LDMAController::FreeChannels()
 {
     EnableClock();
 
@@ -44,7 +44,7 @@ unsigned LDMAController::FreeChannels() const
 
     for (unsigned i = 0; i < countof(CH); i++)
     {
-        if (CH[i].REQSEL == 0)
+        if (REQSEL(i) == 0)
         {
             cnt++;
         }
@@ -71,15 +71,15 @@ async_def()
     // do not clear the interrupts before waiting,
     // as some bits may be already set
 
-    EFM32_BITSET(IEN, mask);
+    EFM32_BITSET_REG(IEN, mask);
     do
     {
         // wait for any of the remaining bits to become set
         await_mask_not(IF, IEN & mask, 0);
-        EFM32_BITCLR(IEN, IF & mask);
+        EFM32_BITCLR_REG(IEN, IF & mask);
         NVIC_ClearPendingIRQ(LDMA_IRQn);
     } while (IEN & mask);
 
-    IFC = mask;
+    EFM32_IFC(this) = mask;
 }
 async_end
