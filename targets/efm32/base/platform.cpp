@@ -44,7 +44,11 @@ void _efm32_startup()
     TPI->FFCR = 0x100;  // EnFTC
 
     // enable ITM
+#ifdef ITM_TCR_TRACEBUSID_Pos
+    ITM->TCR = (1 << ITM_TCR_TRACEBUSID_Pos) | ITM_TCR_SWOENA_Msk | ITM_TCR_ITMENA_Msk;
+#else
     ITM->TCR = (1 << ITM_TCR_TraceBusID_Pos) | ITM_TCR_SWOENA_Msk | ITM_TCR_ITMENA_Msk;
+#endif
     ITM->TER = ~0u;		// enable all channels
 #endif
 }
