@@ -12,6 +12,8 @@
 
 #include <base/base.h>
 
+#include <hw/DEVINFO.h>
+
 #undef CMU
 #define CMU	CM_PERIPHERAL(_CMU, CMU_BASE)
 
@@ -87,6 +89,7 @@ public:
 #else
     static constexpr unsigned GetCoreFrequency() { return 19000000; }
 #endif
+    static constexpr unsigned GetTraceFrequency() { return EFM32_AUXHFRCO_FREQUENCY; }
 
     void PrescaleHFEXPCLK(unsigned prescaler) { HFEXPPRESC = (prescaler - 1) << 8; }
 
@@ -188,4 +191,15 @@ public:
 
 private:
     void IRQHandler();
+
+    //! Early clock configuration
+    void EarlyConfigure()
+    {
+        // configure AUXHFRCO to 16 MHz so that it can clock ADC directly
+        AUXHFRCOCTRL = DEVINFO->AUXHFRCOCAL7;
+        // enable low-energy peripherals so that we know if RTCC kept running or not
+        EnableLE();
+    }
+
+    friend void _efm32_startup();
 };

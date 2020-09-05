@@ -22,8 +22,7 @@ void _efm32_startup()
     // this is an inline function, so we actually don't need the full emlib component for it, just the headers
     CHIP_Init();
 
-    // configure AUXHFRCO to 16 MHz so that it can clock ADC directly
-    CMU->AUXHFRCOCTRL = DEVINFO->AUXHFRCOCAL7;
+    CMU->EarlyConfigure();
 
 #if TRACE || MINTRACE
     // enable clock to GPIO
@@ -49,16 +48,13 @@ void _efm32_startup()
 
     // initialize TPIU
     TPI->SPPR = 2;		// NRZ protocol
-    TPI->ACPR = (EFM32_AUXHFRCO_FREQUENCY / SWV_BAUD_RATE) - 1;
+    TPI->ACPR = ((CMU->GetTraceFrequency() + SWV_BAUD_RATE / 2) / SWV_BAUD_RATE) - 1;
     TPI->FFCR = 0x100;  // EnFTC
 
     // enable ITM
     ITM->TCR = (1 << ITM_TCR_TraceBusID_Pos) | ITM_TCR_SWOENA_Msk | ITM_TCR_ITMENA_Msk;
     ITM->TER = ~0u;		// enable all channels
 #endif
-
-    // enable low-energy peripherals so that we know if RTCC kept running or not
-    CMU->EnableLE();
 }
 
 void _efm32_c_startup()

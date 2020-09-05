@@ -11,8 +11,6 @@
 #define CORTEX_STARTUP_HARDWARE_INIT	_efm32_startup
 #define CORTEX_STARTUP_BEFORE_C_INIT	_efm32_c_startup
 
-#define EFM32_AUXHFRCO_FREQUENCY    16000000
-
 #ifndef SWV_BAUD_RATE
 #define SWV_BAUD_RATE   3200000
 #endif
