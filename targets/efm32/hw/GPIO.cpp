@@ -44,7 +44,7 @@ void GPIOPort::Configure(uint32_t mask, GPIOPin::Mode mode)
     if (!mask)
         return;
 
-    CMU->EnableGPIO();
+    GPIO->EnableClock();
 
 #if EFM32_GPIO_DRIVE_CONTROL
     if (!(MODEL || MODEH) && CTRL == EFM32_GPIO_DRIVE_RESET)
@@ -125,6 +125,8 @@ filter_set:
     } while(mask);
 }
 
+#ifdef _SILICON_LABS_32B_SERIES_1
+
 #ifdef EFM32_GPIO_LINEAR_INDEX
 
 void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, unsigned locOffset)
@@ -164,6 +166,21 @@ void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, GPI
     return Configure(BIT(spec.pin), spec.mode);
 }
 
+#elif defined(_SILICON_LABS_32B_SERIES_2)
+
+void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routeen)
+{
+    CMU->EnableGPIO();
+
+    if (_Trace()) DBG("gpio: Routing port %c%d to peripheral ROUTEEN @ %08X ROUTE %d @ %08X\n", 'A' + Index(), spec.pin, intptr_t(&routeen), spec.route, intptr_t(&routeen) + spec.loc);
+
+    *(uint32_t*)((intptr_t)&routeen + spec.loc) = spec.pin << 16 | GetIndex(this);
+    EFM32_BITSET(routeen, BIT(spec.route));
+    return Configure(BIT(spec.pin), spec.mode);
+}
+
+#endif
+
 uint32_t GPIOBlock::EnableInterrupt(GPIOPinID id, unsigned risingFalling)
 {
     ASSERT(id.Port() >= 0);
@@ -186,8 +203,8 @@ uint32_t GPIOBlock::EnableInterrupt(GPIOPinID id, unsigned risingFalling)
             unsigned offset = (n & 7) << 2;
             MODMASK(*(&EXTIPSELL + h), 15 << offset, port << offset);
             MODMASK(*(&EXTIPINSELL + h), 15 << offset, (pin & 3) << offset);
-            IFC = mask;
-            IEN |= mask;
+            EFM32_IFC(this) = mask;
+            EFM32_BITSET_REG(IEN, mask);
 
             auto irq = (n & 1) ? GPIO_ODD_IRQn : GPIO_EVEN_IRQn;
             Cortex_SetIRQWakeup(irq);
@@ -206,10 +223,10 @@ void GPIOBlock::DisableInterrupt(uint32_t mask)
 {
     if (IEN & mask)
     {
-        IEN &= ~mask;
-        EXTIRISE &= ~mask;
-        EXTIFALL &= ~mask;
-        IFC = mask;
+        EFM32_BITCLR_REG(IEN, mask);
+        EFM32_BITCLR_REG(EXTIRISE, ~mask);
+        EFM32_BITCLR_REG(EXTIFALL, ~mask);
+        EFM32_IFC(this) = mask;
         auto irq = !(__builtin_clz(mask) & 1) ? GPIO_ODD_IRQn : GPIO_EVEN_IRQn;
         NVIC_ClearPendingIRQ(irq);
     }

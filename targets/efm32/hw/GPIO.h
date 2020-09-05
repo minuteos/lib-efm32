@@ -38,48 +38,13 @@
 
 #endif
 
-#ifdef _GPIO_P_CTRL_SLEWRATE_MASK
+#ifdef _SILICON_LABS_32B_SERIES_2
 
-//! Determines if GPIO drive control is available
-#define EFM32_GPIO_DRIVE_CONTROL 1
-
-//! Weak (1 mA) GPIO drive with the specified slew rate (between @ref EFM32_GPIO_SLEW_SLOWEST and @ref EFM32_GPIO_SLEW_FASTEST)
-#define EFM32_GPIO_DRIVE_WEAK(slew)    (((slew) << 4) | 1)
-//! Strong (10 mA) GPIO drive with the specified slew rate (between @ref EFM32_GPIO_SLEW_SLOWEST and @ref EFM32_GPIO_SLEW_FASTEST)
-#define EFM32_GPIO_DRIVE_STRONG(slew)    ((slew) << 4)
-
-#define EFM32_GPIO_DRIVE_SETUP(drive, alt)    (((alt) << 16) | (drive))
-
-//! Represents the slowest available slew rate
-#define EFM32_GPIO_SLEW_SLOWEST    0
-//! Represents the default slew rate after configuration
-#define EFM32_GPIO_SLEW_DEFAULT    4
-//! Represents the default slew rate after reset
-#define EFM32_GPIO_SLEW_RESET      5
-//! Represents the fastest available slew rate
-#define EFM32_GPIO_SLEW_FASTEST    7
-
-#include <efm32_gpio_config.h>
-
-//! Default GPIO drive configuration after reset
-#define EFM32_GPIO_DRIVE_RESET      EFM32_GPIO_DRIVE_SETUP(EFM32_GPIO_DRIVE_STRONG(EFM32_GPIO_SLEW_RESET), EFM32_GPIO_DRIVE_STRONG(EFM32_GPIO_SLEW_RESET))
-
-#ifndef EFM32_GPIO_ALT_DRIVE
-//! Alternate GPIO drive configuration
-#define EFM32_GPIO_ALT_DRIVE        EFM32_GPIO_DRIVE_WEAK(EFM32_GPIO_SLEW_DEFAULT)
-#endif
-
-#ifndef EFM32_GPIO_DRIVE
-//! Primary GPIO drive configuration
-#define EFM32_GPIO_DRIVE            EFM32_GPIO_DRIVE_STRONG(EFM32_GPIO_SLEW_DEFAULT)
-#endif
-
-#ifndef EFM32_GPIO_DRIVE_DEFAULT
-//! Default application specific GPIO drive configuration
-#define EFM32_GPIO_DRIVE_DEFAULT    EFM32_GPIO_DRIVE_SETUP(EFM32_GPIO_DRIVE, EFM32_GPIO_ALT_DRIVE)
-#endif
+typedef GPIO_PORT_TypeDef GPIO_P_TypeDef;
 
 #endif
+
+#include <hw/GPIO_DriveConfig.h>
 
 #undef GPIO
 #define GPIO    CM_PERIPHERAL(GPIOBlock, GPIO_BASE)
@@ -166,8 +131,8 @@ public:
     //! Gets the port index (0-15)
     constexpr int Pin() const { return index; }
 
-    //! Checks if this is a valid GPIO pin
-    constexpr operator bool() const { return IsValid(); }
+    //! Gets the numeric representation of the Pin ID
+    constexpr operator uint8_t() const { return id; }
 
 private:
 #ifdef EFM32_GPIO_LINEAR_INDEX
@@ -281,6 +246,9 @@ public:
 #ifdef _GPIO_P_OVTDIS_MASK
         //! Overvoltage protection is disabled for the pin
         FlagNoOvervoltage = 0x80,
+#else
+        //! Overvoltage protection is disabled for the pin (not supported for this MCU)
+        FlagNoOvervoltage = 0,
 #endif
 
         //! Helper for an input with internal pull-down enabled
@@ -304,12 +272,31 @@ public:
 
     //! Configures the GPIOPin with the specified drive @ref Mode
     void Configure(Mode mode) const;
+#if defined(_SILICON_LABS_32B_SERIES_1)
     //! Configures the GPIOPin for an alternate function, selecting from the provided lookup table
     /*! @p route parameter determines both ROUTEPEN register bit and field offset in the ROUTELOC registers */
     ALWAYS_INLINE void ConfigureAlternate(Mode mode, volatile uint32_t& routepen, uint8_t route, GPIOLocations_t locations) const { ConfigureAlternate(mode, routepen, route, route, locations); }
     //! Configures the GPIOPin for an alternate function, selecting from the provided lookup table
     /*! Separate ROUTEPEN (@p route) and ROUTELOC (@p locIndex) offset can be specified */
     void ConfigureAlternate(Mode mode, volatile uint32_t& routepen, uint8_t route, uint8_t locIndex, GPIOLocations_t locations) const;
+#elif defined(_SILICON_LABS_32B_SERIES_2)
+
+    template<typename T> static volatile uint32_t& __ROUTEEN(T* array, unsigned index) { return array[index].ROUTEEN; }
+    template<typename T> static volatile uint32_t& __ROUTEEN(T& single, unsigned index) { return single.ROUTEEN; }
+
+//! Helper for providing the required arguments to ConfigureAlternate
+#define GPIO_ROUTE_ARGS(peripheral, pin) GPIOPin::__ROUTEEN(GPIO->peripheral ## ROUTE, Index()), _GPIO_ ## peripheral ## _ROUTEEN_ ## pin ## PEN_SHIFT, offsetof(GPIO_ ## peripheral ## ROUTE_TypeDef, pin ## ROUTE)
+//! Helper for providing the required arguments to ConfigureAlternate for pins that don't have a corresponding bit in ROUTEEN
+#define GPIO_ROUTE_ARGS_NOPEN(peripheral, pin) GPIOPin::__ROUTEEN(GPIO->peripheral ## ROUTE, Index()), 32, offsetof(GPIO_ ## peripheral ## ROUTE_TypeDef, pin ## ROUTE)
+
+    //! Configures the GPIOPin for an alternate function
+    /*! @p route parameter determines both ROUTEPEN register bit and field offset in the ROUTELOC registers */
+    template<typename T> ALWAYS_INLINE void ConfigureAlternate(Mode mode, volatile T& cfgGroup, unsigned penBit, unsigned routeOffset) const { ConfigureAlternate(mode, cfgGroup.ROUTEEN, penBit, routeOffset); }
+    //! Configures the GPIOPin for an alternate function, selecting from the provided lookup table
+    /*! Separate ROUTEPEN (@p route) and ROUTELOC (@p locIndex) offset can be specified */
+    void ConfigureAlternate(Mode mode, volatile uint32_t& routeen, unsigned penBit, unsigned routeOffset) const;
+#endif
+
     //! Enables edge interrupt generation
     /*! @returns the mask to the interrupt registers allocated for the pin */
     uint32_t EnableInterrupt(bool rising, bool falling) const;
@@ -452,23 +439,34 @@ public:
      */
     void Setup(uint32_t drive = EFM32_GPIO_DRIVE_DEFAULT)
     {
+#ifdef _GPIO_P_CTRL_DRIVESTRENGTH_MASK
         DBGCL("gpio", "Configuring port %c drive %s(%d), ALT %s(%d)",
             'A' + Index(),
             (drive & _GPIO_P_CTRL_DRIVESTRENGTH_MASK) == GPIO_P_CTRL_DRIVESTRENGTH_WEAK ? "WEAK" : "STRONG",
             (drive & _GPIO_P_CTRL_SLEWRATE_MASK) >> _GPIO_P_CTRL_SLEWRATE_SHIFT,
             (drive & _GPIO_P_CTRL_DRIVESTRENGTHALT_MASK) == GPIO_P_CTRL_DRIVESTRENGTHALT_WEAK ? "WEAK" : "STRONG",
             (drive & _GPIO_P_CTRL_SLEWRATEALT_MASK) >> _GPIO_P_CTRL_SLEWRATEALT_SHIFT);
+#else
+        DBGCL("gpio", "Configuring port %c drive %d, ALT %d",
+            'A' + Index(),
+            (drive & _GPIO_P_CTRL_SLEWRATE_MASK) >> _GPIO_P_CTRL_SLEWRATE_SHIFT,
+            (drive & _GPIO_P_CTRL_SLEWRATEALT_MASK) >> _GPIO_P_CTRL_SLEWRATEALT_SHIFT);
+#endif
         CTRL = drive;
     }
 #endif
 
     static constexpr int GetIndex(const GPIOPort* port) { return (((uintptr_t)port) - GPIO_BASE) / sizeof(GPIOPort); }
 
-#ifdef EFM32_BITMODPTR
+#ifdef EFM32_PERIPHERAL_BITMOD
     volatile uint32_t* BitSetPtr() { return EFM32_BITMODPTR(true, &DOUT); }
     volatile uint32_t* BitClearPtr() { return EFM32_BITMODPTR(false, &DOUT); }
 #endif
+#ifdef EFM32_PERIPHERAL_BITTGL
+    volatile uint32_t* TogglePtr() { return EFM32_BITTGLPTR(&DOUT); }
+#else
     volatile uint32_t* TogglePtr() { return &DOUTTGL; }
+#endif
     const volatile uint32_t* InputPtr() { return &DIN; }
     volatile uint32_t* OutputPtr() { return &DOUT; }
 
@@ -499,7 +497,11 @@ private:
 #ifdef EFM32_GPIO_LINEAR_INDEX
     void ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, unsigned locOffset);
 #endif
+#if defined(_SILICON_LABS_32B_SERIES_1)
     void ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, GPIOLocations_t locations);
+#elif defined(_SILICON_LABS_32B_SERIES_2)
+    void ConfigureAlternate(AltSpec spec, volatile uint32_t& routeen);
+#endif
 #ifdef Ckernel
     async(WaitFor, uint32_t indexAndState, Timeout timeout = Timeout::Infinite);
 #endif
@@ -517,6 +519,9 @@ private:
 //! Represents the entire GPIO peripheral
 class GPIOBlock : public GPIO_TypeDef
 {
+public:
+    void EnableClock() { CMU->EnableGPIO(); }
+
 private:
     uint32_t EnableInterrupt(GPIOPinID id, unsigned risingFalling);
     void DisableInterrupt(uint32_t mask);
@@ -534,6 +539,15 @@ private:
     // enable AUXHFRCO
     CMU->EnableAUXHFRCO();
     while (!CMU->AUXHFRCOReady());
+#elif defined(_SILICON_LABS_32B_SERIES_2)
+    // enable watchdog
+    CMU->EnableWDOG(0);
+    // enable default SWO pin (PA3)
+    TRACEROUTEPEN_SET = GPIO_TRACEROUTEPEN_SWVPEN;
+#if EFM32_GPIO_DRIVE_CONTROL
+    P[0].CTRL = EFM32_GPIO_DRIVE_DEFAULT;
+#endif
+    MODMASK(P[0].MODEL, _GPIO_P_MODEL_MODE3_MASK, GPIO_P_MODEL_MODE3_PUSHPULL);
 #endif
     }
 
@@ -552,7 +566,11 @@ class GPIOPin;
 ALWAYS_INLINE constexpr GPIOPinID GPIOPin::GetID() const { return GPIOPinID(GPIOPort::GetIndex(port), Index()); }
 
 ALWAYS_INLINE void GPIOPin::Configure(Mode mode) const { port->Configure(mask, mode); }
+#if defined(_SILICON_LABS_32B_SERIES_1)
 ALWAYS_INLINE void GPIOPin::ConfigureAlternate(Mode mode, volatile uint32_t& routepen, uint8_t route, uint8_t locIndex, GPIOLocations_t locations) const { port->ConfigureAlternate(GPIOPort::AltSpec(Index(), mode, route, locIndex), routepen, locations); }
+#elif defined(_SILICON_LABS_32B_SERIES_2)
+ALWAYS_INLINE void GPIOPin::ConfigureAlternate(Mode mode, volatile uint32_t& routeen, unsigned penBit, unsigned routeOffset) const { port->ConfigureAlternate(GPIOPort::AltSpec(Index(), mode, penBit, routeOffset), routeen); }
+#endif
 #ifdef EFM32_GPIO_LINEAR_INDEX
 ALWAYS_INLINE constexpr unsigned GPIOPin::GetLinearIndex(unsigned offset) const { return (Index() - offset + EFM32_GPIO_LINEAR_INDEX[GPIOPort::GetIndex(port)]) & 31; }
 ALWAYS_INLINE void GPIOPin::ConfigureAlternate(Mode mode, volatile uint32_t& routepen, uint8_t route, uint8_t locIndex, unsigned locOffset) const { port->ConfigureAlternate(GPIOPort::AltSpec(Index(), mode, route, locIndex), routepen, locOffset); }
@@ -564,7 +582,11 @@ ALWAYS_INLINE async(GPIOPin::WaitFor, bool state, Timeout timeout) { return asyn
 
 ALWAYS_INLINE void GPIOPin::Set() const { EFM32_BITSET(port->DOUT, mask); }
 ALWAYS_INLINE void GPIOPin::Res() const { EFM32_BITCLR(port->DOUT, mask); }
+#ifdef EFM32_PERIPHERAL_BITTGL
+ALWAYS_INLINE void GPIOPin::Toggle() const { EFM32_BITTGL(port->DOUT, mask); }
+#else
 ALWAYS_INLINE void GPIOPin::Toggle() const { port->DOUTTGL = mask; }
+#endif
 ALWAYS_INLINE void GPIOPin::Set(bool state) const { EFM32_BITMOD(state, port->DOUT, mask); }
 ALWAYS_INLINE bool GPIOPin::Get() const { return port->DIN & mask; }
 
