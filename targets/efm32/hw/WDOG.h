@@ -31,9 +31,28 @@ public:
     //! Configure watchdog with the specified timeout, optionally locking the configuration
     void Configure(unsigned timeout, bool lock = false);
     //! Check is the watchdog is enabled
-    bool Enabled() const { return CTRL & WDOG_CTRL_EN; }
+    bool Enabled() const
+    {
+#ifdef WDOG_CTRL_EN
+        return CTRL & WDOG_CTRL_EN;
+#else
+        return EN;
+#endif
+    }
     //! Disable watchdog
-    void Disable() { if (Enabled()) { Sync(); CTRL = 0; } }
+    void Disable()
+    {
+        if (Enabled())
+        {
+            Sync();
+#ifdef WDOG_CTRL_EN
+            CTRL = 0;
+#else
+            EN = 0;
+#endif
+        }
+    }
+
     //! Sync pending commands
     void Sync() { while (SYNCBUSY); }
 
