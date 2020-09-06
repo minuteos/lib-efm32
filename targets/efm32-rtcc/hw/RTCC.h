@@ -24,35 +24,31 @@
 class _RTCC : public RTCC_TypeDef
 {
 public:
-    enum Flags
-    {
-        Enable = BIT(0),
-        Debug = BIT(2),
-        Prescale = 15 << 8,		// we allow only full prescaling to seconds, which is the only one that makes sense, since COMBCNT becomes a 32k counter while CNT is the number of seconds in this configuration
-        FailureDetection = BIT(15),
-    };
-
     enum ChannelFlags
     {
-        ChannelModeCapture = 1,
-        ChannelModeCompare = 2,
+        ChannelModeCapture = RTCC_CC_CTRL_MODE_INPUTCAPTURE,
+        ChannelModeCompare = RTCC_CC_CTRL_MODE_OUTPUTCOMPARE,
 
-        ChannelOutputPulse = 0 << 2,
-        ChannelOutputToggle = 1 << 2,
-        ChannelOutputClear = 2 << 2,
-        ChannelOutputSet = 3 << 2,
+        ChannelOutputPulse = RTCC_CC_CTRL_CMOA_PULSE,
+        ChannelOutputToggle = RTCC_CC_CTRL_CMOA_TOGGLE,
+        ChannelOutputClear = RTCC_CC_CTRL_CMOA_CLEAR,
+        ChannelOutputSet = RTCC_CC_CTRL_CMOA_SET,
 
-        ChannelInputRising = 0 << 4,
-        ChannelInputFalling = 1 << 4,
-        ChannelInputBoth = 2 << 4,
-        ChannelInputNone = 3 << 4,
+        ChannelInputRising = RTCC_CC_CTRL_ICEDGE_RISING,
+        ChannelInputFalling = RTCC_CC_CTRL_ICEDGE_FALLING,
+        ChannelInputBoth = RTCC_CC_CTRL_ICEDGE_BOTH,
+        ChannelInputNone = RTCC_CC_CTRL_ICEDGE_NONE,
 
-        ChannelPRSOffset = 6,
+        ChannelCompareCounter = RTCC_CC_CTRL_COMPBASE_CNT,
+        ChannelComparePrescaler = RTCC_CC_CTRL_COMPBASE_PRECNT,
 
-        ChannelCompareCounter = 0,
-        ChannelComparePrescaler = BIT(11),
+#ifdef _RTCC_CC_CTRL_PRSSEL_SHIFT
+        ChannelPRSOffset = _RTCC_CC_CTRL_PRSSEL_SHIFT,
+#endif
 
-        ChannelCompareMaskOffset = 12,
+#ifdef _RTCC_CC_CTRL_COMPMASK_SHIFT
+        ChannelCompareMaskOffset = _RTCC_CC_CTRL_COMPMASK_SHIFT,
+#endif
     };
 
     enum
@@ -71,28 +67,44 @@ public:
     void SetTime(uint32_t time) { TimeOffset() = nonzero(time - CNT); }
     //! Configures the specified channel for input capture
     void SetupCapture(unsigned channel, unsigned prsChannel, ChannelFlags flags)
-        { ASSERT(channel < countof(CC)); CC[channel].CTRL = flags | ChannelModeCapture | ChannelFlags(prsChannel << ChannelPRSOffset); }
+    {
+        ASSERT(channel < countof(CC));
+#ifdef _SILICON_LABS_32B_SERIES_2
+        PRS->CONSUMER_RTCC_CC0 = prsChannel;
+        CC[channel].CTRL = flags | ChannelModeCapture;
+#else
+        CC[channel].CTRL = flags | ChannelModeCapture | ChannelFlags(prsChannel << ChannelPRSOffset);
+#endif
+    }
     //! Reads the captured value for the specified channel and clears the corresponding interrupt
-    uint32_t ReadCaptured(unsigned channel) { IFC = RTCC_IFC_CC0 << channel; return CC[channel].CCV; }
+    uint32_t ReadCaptured(unsigned channel) { EFM32_IFC(this) = InterruptMask(channel); return InputCapture(channel); }
 
     void SetupWake(uint32_t at);
     void DisableWake() { InterruptDisable(WakeChannel); }
 
-    void InterruptEnable(unsigned channel) { IEN |= RTCC_IEN_CC0 << channel; }
-    void InterruptDisable(unsigned channel) { IEN &= ~(RTCC_IEN_CC0 << channel); }
-    void InterruptClear(unsigned channel) { IFC = RTCC_IEN_CC0 << channel; }
-    bool InterruptActive(unsigned channel) { return IF & (RTCC_IEN_CC0 << channel); }
+    void InterruptEnable(unsigned channel) { EFM32_BITSET_REG(IEN, InterruptMask(channel)); }
+    void InterruptDisable(unsigned channel) { EFM32_BITCLR_REG(IEN, InterruptMask(channel)); }
+    void InterruptClear(unsigned channel) { EFM32_IFC(this) = InterruptMask(channel); }
+    bool InterruptActive(unsigned channel) { return IF & InterruptMask(channel); }
 
-    volatile uint32_t& TimeOffset() { return RET[0].REG; }
+    volatile uint32_t& TimeOffset() { return BackupRegister(0); }
 
 #ifdef Ckernel
     async(WaitFor, unsigned channel);
 #endif
 
 private:
-    // RTC must not be configured by application
-    void Setup(Flags flags) { CTRL = flags; }
+#ifdef _SILICON_LABS_32B_SERIES_2
+    uint32_t InputCapture(unsigned channel) { return CC[channel].ICVALUE; }
+    volatile uint32_t& OutputCompare(unsigned channel) { return CC[channel].OCVALUE; }
+    static volatile uint32_t& BackupRegister(unsigned index) { return BURAM->RET[index].REG; }
+    static constexpr uint32_t InterruptMask(unsigned channel) { return RTCC_IF_CC0 << (channel << 1); }
+#else
+    uint32_t InputCapture(unsigned channel) { return CC[channel].CCV; }
+    volatile uint32_t& OutputCompare(unsigned channel) { return CC[channel].CCV; }
+    volatile uint32_t& BackupRegister(unsigned index) { return RET[index].REG; }
+    static constexpr uint32_t InterruptMask(unsigned channel) { return RTCC_IF_CC0 << channel; }
+#endif
 };
 
-DEFINE_FLAG_ENUM(_RTCC::Flags);
 DEFINE_FLAG_ENUM(_RTCC::ChannelFlags);

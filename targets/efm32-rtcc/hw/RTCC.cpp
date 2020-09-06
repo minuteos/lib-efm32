@@ -13,17 +13,30 @@
 
 void _RTCC::Configure()
 {
+#ifdef _RTCC_CTRL_MASK
     bool init = !CMU->RTCCEnabled();
     CMU->EnableRTCC();
 
-    Setup(Enable | Prescale);
+    CTRL = RTCC_CTRL_ENABLE | RTCC_CTRL_CNTPRESC_DIV32768;
+#else
+    CMU->EnableRTCC();
+    bool init = false;
+    if (CFG != RTCC_CFG_CNTPRESC_DIV32768)
+    {
+        init = true;
+        EN = 0;
+        CNT = 0;
+        CFG = RTCC_CFG_CNTPRESC_DIV32768;
+    }
+    EN = RTCC_EN_EN;
+    CMD = RTCC_CMD_START;
+#endif
 
     Cortex_SetIRQWakeup(RTCC_IRQn);
 
     if (init)
     {
-        CNT = 0;
-        memset(RET, 0, sizeof(RET));
+        memset((void*)&BackupRegister(0), 0, 128);
     }
 
     DBGCL("RTCC", "COMBCNT: %X, CNT: %d", Ticks(), CNT);
@@ -35,7 +48,7 @@ void _RTCC::SetupWake(mono_t atTicks)
     InterruptDisable(WakeChannel);
     InterruptClear(WakeChannel);
     SCB->EnableWake(RTCC_IRQn); // also clears any pending request
-    CC[WakeChannel].CCV = atTicks;
+    OutputCompare(WakeChannel) = atTicks;
     CC[WakeChannel].CTRL = ChannelModeCompare | ChannelComparePrescaler;
     InterruptEnable(WakeChannel);
     // we might have already crossed the wake moment
