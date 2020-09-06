@@ -28,6 +28,7 @@ bool _MSC::WriteWord(const volatile void* ptr, uint32_t value)
 {
     UnlockFlash();
 
+#ifdef _SILICON_LABS_32B_SERIES_1
     ADDRB = (uint32_t)ptr;
     WDATA = value;
     WRITECMD = MSC_WRITECMD_LADDRIM | MSC_WRITECMD_WRITEONCE;
@@ -41,6 +42,12 @@ bool _MSC::WriteWord(const volatile void* ptr, uint32_t value)
         WRITECMD = MSC_WRITECMD_LADDRIM | MSC_WRITECMD_WRITEONCE;
         Sync();
     }
+#else
+    ADDRB = (uint32_t)ptr;
+    WDATA = value;
+    while (!(STATUS & MSC_STATUS_WDATAREADY));
+    WRITECMD = MSC_WRITECMD_WRITEEND;
+#endif
 
     LockFlash();
 
@@ -52,7 +59,11 @@ bool _MSC::Write(const volatile void* address, Span data)
     uint32_t addr = (uint32_t)address;
     uint32_t wdata = (uint32_t)data.begin();
     uint32_t length = (uint32_t)data.Length();
+#ifdef _SILICON_LABS_32B_SERIES_1
     bool res = true;
+#else
+    uint32_t page = ~0u;
+#endif
 
     MYTRACE("Writing %u bytes at %08X", data.Length(), addr);
 
@@ -84,6 +95,8 @@ bool _MSC::Write(const volatile void* address, Span data)
         }
 
         wr |= mask;
+
+#ifdef _SILICON_LABS_32B_SERIES_1
         ADDRB = addr;
         WDATA = wr;
         WRITECMD = MSC_WRITECMD_LADDRIM | MSC_WRITECMD_WRITEONCE;
@@ -102,14 +115,46 @@ bool _MSC::Write(const volatile void* address, Span data)
                 break;
             }
         }
+#elif defined(_SILICON_LABS_32B_SERIES_2)
+        if (page != (addr & PageMask))
+        {
+            if (page != ~0u)
+            {
+                WRITECMD = MSC_WRITECMD_WRITEEND;
+            }
+            page = addr & PageMask;
+            ADDRB = addr;
+        }
+        WDATA = wr;
+        while (!(STATUS & MSC_STATUS_WDATAREADY));
+#endif
+
         addr += 4;
         wdata += 4;
         length -= 4;
     }
 
+#ifdef _SILICON_LABS_32B_SERIES_2
+    if (page != ~0u)
+    {
+        WRITECMD = MSC_WRITECMD_WRITEEND;
+    }
+#endif
+
     LockFlash();
 
+#ifdef _SILICON_LABS_32B_SERIES_1
     return res;
+#else
+    // verify now
+    if (data.CompareTo((const void*)address))
+    {
+        DBGCL("WRITE FAILED", "%H != %H", data, Span((const void*)address, data.Length()));
+        return false;
+    }
+
+    return true;
+#endif
 }
 
 bool _MSC::Erase(const volatile void* address, uint32_t length)
@@ -139,7 +184,11 @@ bool _MSC::Erase(const volatile void* address, uint32_t length)
         UnlockFlash();
 
         ADDRB = (uint32_t)p;
+#ifdef MSC_WRITECMD_LADDRIM
         WRITECMD = MSC_WRITECMD_LADDRIM | MSC_WRITECMD_ERASEPAGE;
+#else
+        WRITECMD = MSC_WRITECMD_ERASEPAGE;
+#endif
 
         Sync();
 
@@ -168,7 +217,11 @@ bool _MSC::IsErased(const volatile void* page)
 __attribute__((section(".data#")))
 void _MSC::TryErasePageHelper()
 {
+#ifdef MSC_WRITECMD_LADDRIM
     WRITECMD = MSC_WRITECMD_LADDRIM | MSC_WRITECMD_ERASEPAGE;
+#else
+    WRITECMD = MSC_WRITECMD_ERASEPAGE;
+#endif
     SCB->WaitForInterrupt();
     if (Busy())
     {
@@ -185,7 +238,7 @@ bool _MSC::TryErasePage(const volatile void* page)
     UnlockFlash();
 
     IEN = MSC_IEN_ERASE;
-    IFC = MSC_IFC_ERASE;
+    EFM32_IFC(this) = MSC_IF_ERASE;
     SCB->DisableDeepSleep();
     SCB->EnableWake(MSC_IRQn);
 
@@ -239,7 +292,7 @@ async_def()
         }
     } op = {};
 
-    uint32_t* p = (uint32_t*)((uint32_t)address & ~(PageSize - 1));
+    uint32_t* p = (uint32_t*)((uint32_t)address & PageMask);
 
     if (IsErased(p))
     {

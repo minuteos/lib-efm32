@@ -31,10 +31,10 @@ private:
     bool Busy() { return STATUS & MSC_STATUS_BUSY; }
     void Sync() { while (Busy()); }
 
-    void Unlock() { LOCK = MSC_UNLOCK_CODE; }
+    void Unlock() { LOCK = MSC_LOCK_LOCKKEY_UNLOCK; }
     void UnlockFlash() { Unlock(); WRITECTRL = MSC_WRITECTRL_WREN; }
-    void Lock() { LOCK = 0; }
-    void LockFlash() { WRITECTRL = 0; Lock(); }
+    void Lock() { LOCK = MSC_LOCK_LOCKKEY_LOCK; }
+    void LockFlash() { WRITECTRL = _MSC_WRITECTRL_RESETVALUE; Lock(); }
 
     bool IsErased(const volatile void* page);
 
