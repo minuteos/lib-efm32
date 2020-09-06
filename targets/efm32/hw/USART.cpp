@@ -66,6 +66,8 @@ ALL_LOCS(Rts);
 const uint8_t USART::SyncTransferDescriptor::s_zero = 0;
 uint8_t USART::SyncTransferDescriptor::s_discard;
 
+#ifdef _SILICON_LABS_32B_SERIES_1
+
 bool USART::BindCs(unsigned loc)
 {
     if (ROUTEPEN & USART_ROUTEPEN_CSPEN)
@@ -96,6 +98,8 @@ async_def()
 }
 async_end
 
+#endif
+
 LDMAChannelHandle USART::BeginSyncBidirectionalTransfer(Buffer buffer)
 {
     // we can use a temporary variable, becuase the descriptors will be
@@ -121,10 +125,10 @@ res_pair_t USART::BeginSyncTransferImpl(SyncTransferDescriptor* descriptors, siz
 
     descriptors[i].tx.Destination(&TXDATA);
     descriptors[i].tx.Link(LDMALink::None);
-    descriptors[i].tx.CTRL |= LDMA_CH_CTRL_DONEIFSEN;
+    descriptors[i].tx.DoneInterrupt();
     descriptors[i].rx.Source(&RXDATA);
     descriptors[i].rx.Link(LDMALink::None);
-    descriptors[i].rx.CTRL |= LDMA_CH_CTRL_DONEIFSEN;
+    descriptors[i].rx.DoneInterrupt();
 
     auto dmaRx = LDMA->GetUSARTChannel(Index(), LDMAChannel::USARTSignal::RxDataValid);
     auto dmaTx = LDMA->GetUSARTChannel(Index(), LDMAChannel::USARTSignal::TxFree);

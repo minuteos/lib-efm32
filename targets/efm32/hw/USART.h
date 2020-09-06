@@ -240,9 +240,9 @@ public:
     void RxUnblock() { CMD = USART_CMD_RXBLOCKDIS; }
 
     //! Enables CTS checking for flow control
-    void FlowControlEnable() { EFM32_BITSET(CTRLX, USART_CTRLX_CTSEN); }
+    void FlowControlEnable() { EFM32_BITSET_REG(CTRLX, USART_CTRLX_CTSEN); }
     //! Disables CTS checking for flow control
-    void FlowControlDisable() { EFM32_BITCLR(CTRLX, USART_CTRLX_CTSEN); }
+    void FlowControlDisable() { EFM32_BITCLR_REG(CTRLX, USART_CTRLX_CTSEN); }
 
     //! Checks if data reception is enabled
     bool RxEnabled() { return STATUS & USART_STATUS_RXENS; }
@@ -314,6 +314,22 @@ public:
     void ConfigureRts(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, ROUTEPEN, 5, locsRts[Index()]); }
     //! Gets the location index for the CS pin
     unsigned GetCsLocation(GPIOPin pin) { return pin.GetLocation(locsCs[Index()]); }
+#elif defined(_SILICON_LABS_32B_SERIES_2)
+public:
+    //! Configures the RX pin
+    void ConfigureRx(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::Input) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(USART, RX)); }
+    //! Configures the TX pin
+    void ConfigureTx(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(USART, TX)); }
+    //! Configures the CS pin
+    void ConfigureCs(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(USART, CS)); }
+    //! Configures the CLK pin
+    void ConfigureClk(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(USART, CLK)); }
+    //! Configures the CTS pin
+    void ConfigureCts(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::Input) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS_NOPEN(USART, CTS)); }
+    //! Configures the RTS pin
+    void ConfigureRts(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::PushPull) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(USART, RTS)); }
+    //! Gets the location index for the CS pin
+    GPIOPinID GetCsLocation(GPIOPin pin) { return pin.GetID(); }
 #endif
 
     //! Attempts to bind to the specified CS pin; returns false if CS is already bound
@@ -322,8 +338,13 @@ public:
     bool BindCs(unsigned loc);
     //! Attempts to bind to the specified CS pin; returns false if CS is already bound
     async(BindCs, unsigned loc, Timeout timeout = Timeout::Infinite);
+#ifdef _SILICON_LABS_32B_SERIES_1
     //! Releases the currently bound CS pin
     void ReleaseCs() { ROUTEPEN &= ~USART_ROUTEPEN_CSPEN; }
+#else
+    //! Releases the currently bound CS pin
+    void ReleaseCs() { GPIO->USARTROUTE_CLR[Index()].ROUTEEN = GPIO_USART_ROUTEEN_CSPEN; }
+#endif
 
     struct SyncTransferDescriptor
     {
