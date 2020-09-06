@@ -6,7 +6,7 @@
 # efr32bg13p/Include.mk
 #
 
-TARGETS += efr32-series1
+TARGETS += efr32-series1x
 
 EFM32_DEVICE ?= EFM32BG13P
 # use the most full-featured part by default

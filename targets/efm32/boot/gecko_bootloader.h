@@ -51,6 +51,10 @@ ALWAYS_INLINE void btl_debugWriteNewline(void) { _DBGCHAR('\n'); }
 #define BOOTLOADER_ENFORCE_SECURE_BOOT 1
 #endif
 
+#if !BOOTLOADER_HAS_FIRST_STAGE && !defined(BTL_UPGRADE_LOCATION_BASE)
+#define BTL_UPGRADE_LOCATION_BASE   32768
+#endif
+
 #include <api/btl_interface.h>
 #include <core/btl_bootload.h>
 #include <core/btl_parse.h>

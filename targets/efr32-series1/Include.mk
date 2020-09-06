@@ -9,3 +9,6 @@
 #
 
 TARGETS += efr32 efm32-series1 cortex-m4f
+
+# the libs are compiled with soft FP ABI
+CORTEX_FLOAT_ABI = softfp

@@ -14,17 +14,8 @@ else
 
 TARGETS += gecko-bootloader
 
-GBL_FIRST_STAGE = $(OBJDIR)first-stage.o
-GBL_FIRST_STAGE_SRC = $(EFM32_SDK_BOOT)build/first_stage/gcc/first_stage_btl_$(GBL_VARIANT).s37
-
-ADDITIONAL_BLOBS += $(GBL_FIRST_STAGE)
 LIBS += bootloader_$(GBL_VARIANT)_gcc parser_$(GBL_VARIANT)_gcc storage-single_$(GBL_VARIANT)_gcc
 
 INCLUDE_DIRS += $(EFM32_SDK_MBEDTLS)
-
-$(GBL_FIRST_STAGE_SRC): $(EFM32_SDK_BOOT)
-
-$(GBL_FIRST_STAGE): $(GBL_FIRST_STAGE_SRC)
-	$(OBJCOPY) -I srec -O elf32-littlearm -B arm --rename-section .sec1=.bin.firststage $< $@
 
 endif

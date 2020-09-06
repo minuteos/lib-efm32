@@ -6,4 +6,3 @@
 # efr32/Include.mk
 #
 
-EFM32_RAIL_CHIP = efr32xg1x
