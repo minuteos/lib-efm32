@@ -204,6 +204,22 @@ $(SI_STUDIO):
 
 endif
 
+# helper to generate keys
+
+.PHONY: gen-keys gen-encrypt-key gen-sign-key
+
+gen-keys: gen-encrypt-key gen-sign-key
+
+gen-encrypt-key: $(PROJECT_ROOT)app-encrypt-key.txt
+
+gen-sign-key: $(PROJECT_ROOT)app-sign-key.pem
+
+$(PROJECT_ROOT)app-encrypt-key.txt:
+	$(SI_COMMANDER) gbl keygen --type aes-ccm -o $(PROJECT_ROOT)app-encrypt-key.txt
+
+$(PROJECT_ROOT)app-sign-key.pem:
+	$(SI_COMMANDER) gbl keygen --type ecc-p256 -o $(PROJECT_ROOT)app-sign-key.pem
+
 # helper to upload keys
 
 ifneq (,$(GECKO_SIGN_KEY_TOKENS_PUB)$(GECKO_CRYPT_KEY))
