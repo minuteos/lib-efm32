@@ -143,18 +143,26 @@ public:
 #endif
     }
     //! Gets the bit period in clocks, depending on the configured flags
-    int ClockPeriod() { return BYTES(8, 9, 17)[(CTRL & _I2C_CTRL_CLHR_MASK) >> _I2C_CTRL_CLHR_SHIFT]; }
-    void OutputFrequency(uint32_t freq, int clkper = 0)
+    int ClockPeriod() const { return BYTES(8, 9, 17)[(CTRL & _I2C_CTRL_CLHR_MASK) >> _I2C_CTRL_CLHR_SHIFT]; }
+    //! Gets the peripheral clock frequency
+    unsigned ClockFrequency() const
     {
-        if (clkper == 0)
-            clkper = ClockPeriod();
         auto clkfreq = CMU->GetCoreFrequency();
 #ifdef I2C_EN_EN
         if (!Index())
             clkfreq >>= 1;   // I2C0 is clocked by LSPCLK which is /2
 #endif
-        CLKDIV = (clkfreq / freq - clkper + 1) / clkper;
+        return clkfreq;
     }
+    //! Sets the I2C clock frequency
+    void OutputFrequency(uint32_t freq, int clkper = 0)
+    {
+        if (clkper == 0)
+            clkper = ClockPeriod();
+        CLKDIV = (ClockFrequency() / freq - clkper + 1) / clkper;
+    }
+    //! Gets the current I2C clock frequency
+    uint32_t OutputFrequency() const { return ClockFrequency() / ClockPeriod() / (CLKDIV + 1); }
 
     IRQn_Type IRQn() const { return LOOKUP_TABLE(IRQn_Type, I2C0_IRQn, I2C1_IRQn)[Index()]; }
 

@@ -34,6 +34,11 @@ public:
     async(Write, uint8_t address, Span data, bool start, bool stop) { return async_forward(i2c.Write, address, data, start, stop); }
     //! Continues a write transaction, writing the specified number of bytes to the bus
     async(Write, Span data, bool stop) { return async_forward(i2c.Write, data, stop); }
+
+    //! Gets the current bus frequency
+    uint32_t OutputFrequency() const { return i2c.OutputFrequency(); }
+    //! Sets the current bus frequency
+    void OutputFrequency(uint32_t frequency) const { i2c.OutputFrequency(frequency); }
 };
 
 }
