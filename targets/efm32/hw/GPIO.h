@@ -296,6 +296,8 @@ public:
     /*! Separate ROUTEPEN (@p route) and ROUTELOC (@p locIndex) offset can be specified */
     void ConfigureAlternate(Mode mode, volatile uint32_t& routeen, unsigned penBit, unsigned routeOffset) const;
 #endif
+    //! Configures the GPIOPin for wakeup from EM4
+    void ConfigureWakeFromEM4(bool level = false) const;
 
     //! Enables edge interrupt generation
     /*! @returns the mask to the interrupt registers allocated for the pin */
@@ -526,6 +528,8 @@ private:
     uint32_t EnableInterrupt(GPIOPinID id, unsigned risingFalling);
     void DisableInterrupt(uint32_t mask);
 
+    void ConfigureWakeFromEM4(GPIOPinID id, bool level);
+
     ALWAYS_INLINE void EnableTrace()
     {
 #ifdef _SILICON_LABS_32B_SERIES_1
@@ -579,6 +583,12 @@ ALWAYS_INLINE uint32_t GPIOPin::EnableInterrupt(bool rising, bool falling) const
 #ifdef Ckernel
 ALWAYS_INLINE async(GPIOPin::WaitFor, bool state, Timeout timeout) { return async_forward(Port().WaitFor, (state << 4) | Index(), timeout); }
 #endif
+ALWAYS_INLINE void GPIOPin::ConfigureWakeFromEM4(bool level) const
+{
+    // configure input with filtering and pull away from the desired wakeup level
+    Configure(Mode(InputPull | FlagFilter | (!level * FlagSet)));
+    GPIO->ConfigureWakeFromEM4(GetID(), level);
+}
 
 ALWAYS_INLINE void GPIOPin::Set() const { EFM32_BITSET(port->DOUT, mask); }
 ALWAYS_INLINE void GPIOPin::Res() const { EFM32_BITCLR(port->DOUT, mask); }

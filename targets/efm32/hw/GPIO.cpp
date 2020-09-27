@@ -255,3 +255,28 @@ async_def(
 async_end
 #endif
 
+void GPIOBlock::ConfigureWakeFromEM4(GPIOPinID id, bool level)
+{
+    static const GPIOPinID pins[] = {
+#ifdef EFM32_GPIO_LINEAR_INDEX
+        pF(2), pF(7), 0, 0, pD(14), 0, 0, 0, pA(3), pB(13), 0, 0, pC(10)
+#elif defined(_SILICON_LABS_32B_SERIES_1) && defined(_EFM32_GIANT_FAMILY)
+        pA(0), pA(6), pC(9), pF(1), pF(2), pE(13), pC(4), pB(11), pF(8), pE(10)
+#endif
+    };
+
+    // cannot use GPIOPin::GetLocation, because the array contains zeros
+    unsigned loc;
+    for (loc = 0; loc < countof(pins); loc++)
+    {
+        if (pins[loc] == id)
+            break;
+    }
+    ASSERT(loc < countof(pins));
+
+    uint32_t mask = BIT(loc + 16);
+    EM4WUEN |= mask;
+    if (level)
+        EXTILEVEL |= mask;
+    EFM32_IFC(this) = mask;
+}
