@@ -171,7 +171,7 @@ async_def()
         }
         else if (flags.nack)
         {
-            DBGERR("ANAK");
+            // address NAK == device not present, do not log an error
             async_return(false);
         }
         else if (flags.ack)
