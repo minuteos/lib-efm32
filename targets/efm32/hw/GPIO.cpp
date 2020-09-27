@@ -44,8 +44,6 @@ void GPIOPort::Configure(uint32_t mask, GPIOPin::Mode mode)
     if (!mask)
         return;
 
-    GPIO->EnableClock();
-
 #if EFM32_GPIO_DRIVE_CONTROL
     if (!(MODEL || MODEH) && CTRL == EFM32_GPIO_DRIVE_RESET)
         Setup();	// configure port drive settings, unless they were already modified
@@ -155,8 +153,6 @@ void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, GPI
 
 #endif
 
-    CMU->EnableGPIO();
-
     if (_Trace()) DBG("gpio: Routing port %c%d to peripheral %08X route %d location %d\n", 'A' + Index(), spec.pin, ((uint)&routepen) & ~(MASK(10)), spec.loc, n);
 
     volatile uint32_t* ploc = &routepen + 1 + (spec.loc >> 2);
@@ -170,8 +166,6 @@ void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routepen, GPI
 
 void GPIOPort::ConfigureAlternate(AltSpec spec, volatile uint32_t& routeen)
 {
-    CMU->EnableGPIO();
-
     if (_Trace()) DBG("gpio: Routing port %c%d to peripheral ROUTEEN @ %08X ROUTE %d @ %08X\n", 'A' + Index(), spec.pin, intptr_t(&routeen), spec.route, intptr_t(&routeen) + spec.loc);
 
     *(uint32_t*)((intptr_t)&routeen + spec.loc) = spec.pin << 16 | GetIndex(this);

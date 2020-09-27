@@ -521,9 +521,6 @@ private:
 //! Represents the entire GPIO peripheral
 class GPIOBlock : public GPIO_TypeDef
 {
-public:
-    void EnableClock() { CMU->EnableGPIO(); }
-
 private:
     uint32_t EnableInterrupt(GPIOPinID id, unsigned risingFalling);
     void DisableInterrupt(uint32_t mask);

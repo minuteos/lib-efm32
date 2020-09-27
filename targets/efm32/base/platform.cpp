@@ -25,10 +25,12 @@ void _efm32_startup()
 
     CMU->EarlyConfigure();
 
-#if TRACE || MINTRACE
     // enable clock to GPIO
     CMU->EnableGPIO();
+    // there may be GPIO interrupts set after EM4 wakeup, they would prevent the MCU from sleeping
+    EFM32_IFC(GPIO) = ~0u;
 
+#if TRACE || MINTRACE
     GPIO->EnableTrace();
 
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
