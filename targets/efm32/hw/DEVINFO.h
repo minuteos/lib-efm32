@@ -21,7 +21,11 @@ public:
     //! Gets the 48-bit Extended Unique Identifier of the device
     Span GetEUI48() const { return Span((const void*)&EUI48L, 6); }
     //! Gets the 64-bit Unique Identifier of the device
+#ifdef _DEVINFO_EUI64L_MASK
+    Span GetUniqueID() const { return Span((const void*)&EUI64L, 8); }
+#else
     Span GetUniqueID() const { return Span((const void*)&UNIQUEL, 8); }
+#endif
 
     //! Gets the size of FLASH in bytes
     uint32_t FlashSize() const { return ((this->MSIZE & _DEVINFO_MSIZE_FLASH_MASK) >> _DEVINFO_MSIZE_FLASH_SHIFT) << 10; }
