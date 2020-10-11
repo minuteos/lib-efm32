@@ -34,6 +34,41 @@ __attribute__((used, section(".bootloader.table"))) const MainBootloaderTable_t 
 #include <sl_crypto/src/crypto_management.c>
 #include <sl_crypto/src/shax.c>
 
+#include <sl_crypto/src/cryptoacc_aes.c>
+#include <sl_crypto/src/cryptoacc_ecp.c>
+#include <sl_crypto/src/cryptoacc_sha.c>
+
+#include <sl_crypto/src/cryptoacc/src/ba414ep_config.c>
+#include <sl_crypto/src/cryptoacc/src/cryptodma_internal.c>
+#include <sl_crypto/src/cryptoacc/src/cryptolib_types.c>
+#include <sl_crypto/src/cryptoacc/src/sx_aes.c>
+#include <sl_crypto/src/cryptoacc/src/sx_blk_cipher.c>
+#include <sl_crypto/src/cryptoacc/src/sx_ecc_curves.c>
+#include <sl_crypto/src/cryptoacc/src/sx_ecdsa_alg.c>
+#include <sl_crypto/src/cryptoacc/src/sx_hash.c>
+#include <sl_crypto/src/cryptoacc/src/sx_memcpy.c>
+
+// there is an incompatible declaration for these two functions in cryptoacc_management.c
+#define sx_sm4_set_hw_config_for_key    _invalid_sx_sm4_set_hw_config_for_key
+#define sx_aria_set_hw_config_for_key   _invalid_sx_aria_set_hw_config_for_key
+
+#include <sl_crypto/src/cryptoacc_management.c>
+
+#undef sx_sm4_set_hw_config_for_key
+#undef sx_aria_set_hw_config_for_key
+
+// but they still need to be weakly aliased to prevent link errors
+__attribute__((weak, alias("__unsupported")))
+uint32_t sx_sm4_set_hw_config_for_key(block_t *key, uint32_t *config);
+__attribute__((weak, alias("__unsupported")))
+uint32_t sx_aria_set_hw_config_for_key(block_t *key, uint32_t *config);
+
+uint32_t __unsupported(block_t *key, uint32_t *config)
+{
+    return CRYPTOLIB_UNSUPPORTED_ERR;
+}
+
+
 #include <library/bignum.c>
 
 #undef EC_BIGINT_COPY

@@ -10,3 +10,8 @@
 
 TARGETS += efr32 efm32-series2 cortex-m33
 EFM32_RAIL_CHIP = efr32xg2x
+
+ifdef BOOTLOADER_BUILD
+# bootloader support libs are built with softfp
+CORTEX_FLOAT_ABI = softfp
+endif
