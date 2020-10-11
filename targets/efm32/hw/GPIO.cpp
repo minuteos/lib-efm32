@@ -271,6 +271,12 @@ void GPIOBlock::ConfigureWakeFromEM4(GPIOPinID id, bool level)
     uint32_t mask = BIT(loc + 16);
     EM4WUEN |= mask;
     if (level)
+    {
+#ifdef _GPIO_EM4WUPOL_MASK
+        EM4WUPOL_SET = mask;
+#else
         EXTILEVEL |= mask;
+#endif
+    }
     EFM32_IFC(this) = mask;
 }
