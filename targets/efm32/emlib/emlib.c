@@ -55,3 +55,6 @@
 #include <../src/em_lesense.c>
 #include <../src/em_rtcc.c>
 #include <../src/em_dbg.c>
+#if defined(SEMAILBOX_PRESENT) || defined(CRYPTOACC_PRESENT)
+#include <../src/em_se.c>
+#endif
