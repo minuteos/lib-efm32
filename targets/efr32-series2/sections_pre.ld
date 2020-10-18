@@ -11,6 +11,6 @@
 SECTIONS {
     .bin.bootloader : {
         KEEP(*(.binboot*))
-        . = ALIGN(8192);
+        . = 0x6000;
     } >FLASH
 }
