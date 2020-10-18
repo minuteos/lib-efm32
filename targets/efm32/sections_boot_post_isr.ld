@@ -11,9 +11,13 @@
 
 SECTIONS {
     .text.boot_table : {
-        . = __boot_start + 0x28;   /* pointer to magic must be at offset 0x28 */
+        . = __boot_start + 0x28;   /* pointer to main bootloader table */
         LONG(__boot_header);
+        . = __boot_start + 0x34;   /* pointer to bootloader application properties */
+        LONG(__boot_props);
         __boot_header = .;
         KEEP(*(.bootloader.table));
+        __boot_props = .;
+        KEEP(*(.bootloader.props));
     } >FLASH_BOOT
 }

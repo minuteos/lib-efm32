@@ -16,6 +16,8 @@
 
 __attribute__((used, section(".bootloader.table"))) const MainBootloaderTable_t mainStageTable;
 
+__attribute__((used, section(".bootloader.props"))) const ApplicationProperties_t sl_app_properties;
+
 #include <em_core.h>
 
 #undef CORE_ENTER_CRITICAL
