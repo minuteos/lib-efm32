@@ -38,6 +38,8 @@ __attribute__((used, section(".bootloader.table"))) const MainBootloaderTable_t 
 #include <sl_crypto/src/cryptoacc_ecp.c>
 #include <sl_crypto/src/cryptoacc_sha.c>
 
+#if defined(SEMAILBOX_PRESENT) || defined(CRYPTOACC_PRESENT)
+
 #include <sl_crypto/src/cryptoacc/src/ba414ep_config.c>
 #include <sl_crypto/src/cryptoacc/src/cryptodma_internal.c>
 #include <sl_crypto/src/cryptoacc/src/cryptolib_types.c>
@@ -68,6 +70,7 @@ uint32_t __unsupported(block_t *key, uint32_t *config)
     return CRYPTOLIB_UNSUPPORTED_ERR;
 }
 
+#endif
 
 #include <library/bignum.c>
 
