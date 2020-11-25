@@ -9,6 +9,7 @@
 #
 
 GECKO_APP_SREC = $(OUTPUT)-app.s37
+FLASH_OUTPUT = $(GECK_APP_SREC)
 
 .PHONY: app-srec
 
@@ -33,6 +34,7 @@ GECKO_APP_SIGNED_SREC = $(OUTPUT)-app-signed.s37
 GECKO_SIGNED_PRIMARY = $(OUTPUT)-signed$(PRIMARY_EXT)
 GECKO_SIGNED_SREC = $(OUTPUT)-signed.s37
 LAUNCH_OUTPUT = $(GECKO_SIGNED_PRIMARY)
+FLASH_OUTPUT = $(GECKO_SIGNED_SREC)
 
 .PHONY: signed-app-srec signed-main signed-srec
 
@@ -54,3 +56,8 @@ $(GECKO_SIGNED_SREC): $(GECKO_SIGNED_PRIMARY)
 	$(OBJCOPY) -O srec --srec-forceS3 $< $@
 
 endif
+
+.PHONY: flash-program
+
+flash-program: $(FLASH_OUTPUT)
+	$(SI_COMMANDER) flash --speed 4000 $(FLASH_OUTPUT) -d $(SI_COMMANDER_DEVICE)
