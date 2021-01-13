@@ -51,28 +51,28 @@ if "%NO_ERASE%" == "" (
     if "%NO_ERASE%" == "" (
         echo Mass erasing flash...
         %COMMANDER% device %DEVICE_ARGS% masserase
-        if errorlevel 1 goto error
+        if %ERRORLEVEL% NEQ 0 goto error
     )
 
     if not "%TOKEN_CONFIG%" == "" (
         echo Flashing manufacturing tokens...
         %COMMANDER% flash %DEVICE_ARGS% --tokengroup znet %TOKEN_CONFIG%
-        if errorlevel 1 goto error
+        if %ERRORLEVEL% NEQ 0 goto error
     )
 
     echo Flashing main image from %IMAGE%...
     %COMMANDER% flash %DEVICE_ARGS% %IMAGE%
-    if errorlevel 1 goto error
+    if %ERRORLEVEL% NEQ 0 goto error
 
     if "%NO_ERASE%" == "" (
         echo Locking debug access...
         %COMMANDER% device %DEVICE_ARGS% lock --debug enable
-        if errorlevel 1 goto error
+        if %ERRORLEVEL% NEQ 0 goto error
     )
 
     echo Resetting device...
     %COMMANDER% device reset
-    if errorlevel 1 goto error
+    if %ERRORLEVEL% NEQ 0 goto error
 
     echo.
     echo %GREEN%Success%NORM%
