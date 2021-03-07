@@ -93,7 +93,7 @@ public:
     void Setup(Flags flags) { MODMASK(CTRL, FlagMask, flags); }
 
     unsigned OversampleRate() const { return 2 << ((CTRL & _ADC_CTRL_OVSRSEL_MASK) >> _ADC_CTRL_OVSRSEL_SHIFT); }
-    void OversampleRate(unsigned rate) { MODMASK_SAFE(CTRL, _ADC_CTRL_OVSRSEL_MASK << 24, (30 - __CLZ(rate)) << _ADC_CTRL_OVSRSEL_SHIFT); }
+    void OversampleRate(unsigned rate) { MODMASK_SAFE(CTRL, _ADC_CTRL_OVSRSEL_MASK, (30 - __CLZ(rate)) << _ADC_CTRL_OVSRSEL_SHIFT); }
 
     uint32_t Timebase() const { return ((CTRL & _ADC_CTRL_TIMEBASE_MASK) >> _ADC_CTRL_TIMEBASE_SHIFT) + 1; }
     void Timebase(uint32_t clocks) { MODMASK_SAFE(CTRL, _ADC_CTRL_TIMEBASE_MASK, (clocks - 1) << 16); }
