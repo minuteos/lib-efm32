@@ -69,6 +69,8 @@ ifeq (,$(EFM32_SDK_VERSION))
   endif
 endif
 
+export EFM32_SDK_VERSION := $(EFM32_SDK_VERSION)
+
 # we need to link the SDK into our build directory, as it typically contains spaces which Makefile cannot handle at all
 EFM32_SDK_ORIGIN ?= $(EFM32_SDKS)$(EFM32_SDK_VERSION)/
 EFM32_DEVICE ?= $(filter $(TARGETS),EFM32%g%)
