@@ -20,7 +20,7 @@
 //#define EFM32_I2C_DEBUG   1
 
 #if EFM32_I2C_DEBUG
-#define DIAG(...)	DBGCL("I2C", __VA_ARGS__)
+#define DIAG(...)	DBGCL(Index() ? "I2C1" : "I2C0", __VA_ARGS__)
 #else
 #define DIAG(...)
 #endif
