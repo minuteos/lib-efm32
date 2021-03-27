@@ -49,12 +49,14 @@ public:
         SourceUSART1_Tx = PRS_CH_CTRL_SOURCESEL_USART1 | PRS_CH_CTRL_SIGSEL_USART1TX,
         SourceUSART1_Cs = PRS_CH_CTRL_SOURCESEL_USART1 | PRS_CH_CTRL_SIGSEL_USART1CS,
 
+#ifdef PRS_CH_CTRL_SOURCESEL_USART2
         SourceUSART2_IRTx = PRS_CH_CTRL_SOURCESEL_USART2 | PRS_CH_CTRL_SIGSEL_USART2IRTX,
         SourceUSART2_TxComplete = PRS_CH_CTRL_SOURCESEL_USART2 | PRS_CH_CTRL_SIGSEL_USART2TXC,
         SourceUSART2_DataValid = PRS_CH_CTRL_SOURCESEL_USART2 | PRS_CH_CTRL_SIGSEL_USART2RXDATAV,
         SourceUSART2_Rts = PRS_CH_CTRL_SOURCESEL_USART2 | PRS_CH_CTRL_SIGSEL_USART2RTS,
         SourceUSART2_Tx = PRS_CH_CTRL_SOURCESEL_USART2 | PRS_CH_CTRL_SIGSEL_USART2TX,
         SourceUSART2_Cs = PRS_CH_CTRL_SOURCESEL_USART2 | PRS_CH_CTRL_SIGSEL_USART2CS,
+#endif
 
         SourceTIMER0_Underflow = PRS_CH_CTRL_SOURCESEL_TIMER0 | PRS_CH_CTRL_SIGSEL_TIMER0UF,
         SourceTIMER0_Overflow = PRS_CH_CTRL_SOURCESEL_TIMER0 | PRS_CH_CTRL_SIGSEL_TIMER0OF,
@@ -224,6 +226,8 @@ public:
     PRSChannelHandle GetChannel(PRSChannel::Flags flags);
     //! Gets the specified ACMP channel with the specified flags or allocates a new one
     PRSChannelHandle GetACMPChannel(unsigned index, PRSChannel::Flags flags) { ASSERT(index < ACMP_COUNT); return GetChannel(flags | PRSChannel::Flags(PRSChannel::SourceACMP0 + index)); }
+    //! Gets the specified GPIO channel with the specified flags or allocates a new one
+    PRSChannelHandle GetGPIOChannel(unsigned index, PRSChannel::Flags flags) { ASSERT(index < 16); return GetChannel(flags | PRSChannel::Flags((GETBIT(index, 3) ? PRSChannel::SourceGPIO8 : PRSChannel::SourceGPIO0) + (index & 7))); }
     //! Generates a pulse on the specified channel
     void PulseChannel(unsigned n) { SWPULSE = BIT(n); }
 
