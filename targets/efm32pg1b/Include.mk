@@ -12,3 +12,5 @@ EFM32_DEVICE ?= EFM32PG1B
 # use the most full-featured part by default
 EFM32_PART ?= efm32pg1b200f256gm48.h
 GBL_VARIANT = efx32jg1b
+JLINK_DEVICE ?= EFM32PG1BxxxF256
+SI_COMMANDER_DEVICE ?= efm32pg1b
