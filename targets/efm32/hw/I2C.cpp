@@ -78,7 +78,7 @@ void I2C::TransactionInit()
 {
     ASSERT(IEN == 0);
 
-    NVIC_SetPriority(IRQn(), 0xFF);
+    Cortex_SetIRQWakeup(IRQn());
     IRQClear();
     IRQEnable();
     // must not sleep while communicating
@@ -347,5 +347,123 @@ async_def()
     DBGERR("Unhandled error");
     ASSERT(0);
     await(Reset);
+}
+async_end
+
+
+
+async(I2C::SlaveWait, SlaveRequest request, Timeout timeout)
+async_def(
+    Timeout timeout;
+    uint32_t expect, mask;
+)
+{
+    ASSERT(IEN == 0);
+    ASSERT(request != SlaveRequest::None);
+    f.timeout = timeout.MakeAbsolute();
+
+    if (await_acquire_timeout(s_locks, BIT(Index()), f.timeout))
+    {
+        Cortex_SetIRQWakeup(IRQn());
+        IRQClear();
+        IRQEnable();
+        // no need to disable deep sleep yet, interrupt will wake us
+
+        for (;;)
+        {
+            // wait for the right bus state
+            if (!await_mask_not_timeout(IF, IEN = I2C_IF_ADDR, 0, timeout))
+            {
+                break;
+            }
+            ClearFlags();
+
+            if (State() == BusState::BusAddr && BusBusy() && BusHeld())
+            {
+                auto addr = Receive();
+                DIAG("SLAVE << %c %02X", GETBIT(addr, 0) ? 'R' : 'W', addr);
+                if (request == SlaveRequest::Any || IsTransmitter() == (request == SlaveRequest::Read))
+                {
+                    // must not sleep while communicating
+                    PLATFORM_DEEP_SLEEP_DISABLE();
+                    async_return(int(GETBIT(addr, 0) ? SlaveRequest::Read : SlaveRequest::Write));
+                }
+
+                NACK();
+            }
+        }
+
+        RESBIT(s_locks, Index());
+        IEN = 0;
+        IRQDisable();
+    }
+
+    async_return(int(SlaveRequest::None));
+}
+async_end
+
+async(I2C::_SlaveWrite, const char* data, size_t length)
+async_def(uint32_t wx)
+{
+    ASSERT(length);
+    if (State() == BusState::BusAddr)
+    {
+        // we must acknowledge the address
+        ACK();
+    }
+
+    for (f.wx = 0; f.wx < length; f.wx++)
+    {
+        DIAG(">> %02X (Data %d)", data[f.wx], f.wx);
+        Send(data[f.wx]);
+
+        for (;;)
+        {
+            bool timeout = !await_mask_not_ms(IF, IEN = AwaitFlagsSlaveWrite, 0, I2C_TIMEOUT);
+            auto flags = ClearFlags();
+
+            if (timeout)
+            {
+                DBGERR("timeout waiting for write data ACK");
+                goto done;
+            }
+
+            if (HandleError(flags))
+            {
+                DBGERR("error waiting for write data ACK");
+                goto done;
+            }
+            else if (flags.nack)
+            {
+                DIAG("<NAK");
+                goto done;
+            }
+            else if (flags.ack)
+            {
+                DIAG("<ACK");
+                break;
+            }
+        }
+    }
+
+done:
+    DIAG("DONE");
+    async_return(f.wx);
+}
+async_end
+
+async(I2C::SlaveDone)
+async_def()
+{
+    // slave must send something until master terminates the transaction
+    while (SlaveActive() && IsTransmitter())
+    {
+        DIAG(">> 00 (DUMMY)");
+        Send(0);
+        await_mask_not_ms(IF, IEN = AwaitFlagsSlaveWrite, 0, I2C_TIMEOUT);
+        ClearFlags();
+    }
+
+    TransactionCleanup();
 }
 async_end

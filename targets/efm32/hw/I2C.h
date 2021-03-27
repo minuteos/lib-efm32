@@ -91,6 +91,11 @@ public:
         BusIdle, BusWait, BusStart, BusAddr, BusAddrAck, BusData, BusDataAck,
     };
 
+    enum struct SlaveRequest
+    {
+        None, Read, Write, Any,
+    };
+
     union StateFlags
     {
         constexpr StateFlags(uint32_t value) : flags(value) {}
@@ -163,8 +168,14 @@ public:
     }
     //! Gets the current I2C clock frequency
     uint32_t OutputFrequency() const { return ClockFrequency() / ClockPeriod() / (CLKDIV + 1); }
+    //! Sets the I2C Slave address
+    void SlaveAddress(uint32_t addr, uint32_t mask = 0x7F) { SADDR = addr << _I2C_SADDR_ADDR_SHIFT; SADDRMASK = mask << _I2C_SADDRMASK_MASK_SHIFT; }
 
+#ifdef I2C1
     IRQn_Type IRQn() const { return LOOKUP_TABLE(IRQn_Type, I2C0_IRQn, I2C1_IRQn)[Index()]; }
+#else
+    IRQn_Type IRQn() const { return I2C0_IRQn; }
+#endif
 
     void IRQEnable() { NVIC_EnableIRQ(IRQn()); }
     void IRQDisable() { NVIC_DisableIRQ(IRQn()); }
@@ -205,6 +216,7 @@ public:
     void Send(uint b) { TXDATA = b; }
     uint Receive() { return RXDATA; }
     bool CanStart() { auto state = State(); return (state == BusIdle || state == BusDataAck); }
+    bool SlaveActive() { return State() >= BusAddr; }
 
 #ifdef EFM32_GPIO_LINEAR_INDEX
     void ConfigureScl(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, ROUTEPEN, 1, BYTES(1, 29)[Index()]); }
@@ -229,11 +241,22 @@ public:
     //! Continues a write transaction, writing the specified number of bytes to the bus
     async(Write, Span data, bool stop) { return async_forward(_Write, Operation(false, stop, data.Length()), data.Pointer()); }
 
+    //! Waits for a slave operation request, returns the type of the operation
+    async(SlaveWait, SlaveRequest request = SlaveRequest::Any, Timeout timeout = Timeout::Infinite);
+    //! Reads data as a response to a write request operation
+    //! @returns the number of bytes read
+    async(SlaveRead, Buffer data);
+    //! Writes data as a response to a read request operation
+    async(SlaveWrite, Span data) { return async_forward(_SlaveWrite, data.Pointer(), data.Length()); }
+    //! Ends the current slave request, must be called for every successful SlaveWait
+    async(SlaveDone);
+
 private:
     enum InterruptFlags
     {
         AwaitFlagsNoAck = I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_RXDATAV | I2C_IF_MSTOP,
         AwaitFlags = AwaitFlagsNoAck | I2C_IF_ACK | I2C_IF_NACK,
+        AwaitFlagsSlaveWrite = I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_SSTOP | I2C_IF_ACK | I2C_IF_NACK,
     };
 
     union Operation
@@ -266,6 +289,7 @@ private:
     async(_Address, Operation op);
     async(_Read, Operation op, char* data);
     async(_Write, Operation op, const char* data);
+    async(_SlaveWrite, const char* data, size_t length);
 
     void TransactionInit();
     void TransactionCleanup();
