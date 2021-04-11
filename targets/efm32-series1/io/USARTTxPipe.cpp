@@ -34,7 +34,7 @@ async_def_sync()
 async_end
 
 async(USARTTxPipe::Stop, Timeout timeout)
-async_def()
+async_def_once()
 {
     async_return(await_signal_off_timeout(running, timeout));
 }
