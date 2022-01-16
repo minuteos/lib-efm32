@@ -33,7 +33,8 @@ endif
 
 $(info Simplicity Studio developer root: $(EFM32_DEV_ROOT))
 
-ifneq (,$(wildcard $(EFM32_DEV_ROOT)toolchains/gnu_arm/7.2_2017q4/bin/))
+SI_GCC_PATH ?= $(EFM32_DEV_ROOT)toolchains/gnu_arm/7.2_2017q4/bin/
+ifneq (,$(wildcard $(SI_GCC_PATH)))
   $(info Using GCC 7.2 from Simplicity Studio)
   SHELL := env 'PATH=$(call unescspace,$(EFM32_DEV_ROOT))toolchains/gnu_arm/7.2_2017q4/bin/:$(PATH)' $(SHELL)
   TOOLCHAIN_PATH := $(call unescspace,$(EFM32_DEV_ROOT))toolchains/gnu_arm/7.2_2017q4/bin/
