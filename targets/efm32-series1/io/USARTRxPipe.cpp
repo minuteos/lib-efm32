@@ -199,7 +199,7 @@ async_def()
         }
         size_t count;
         Buffer buf;
-        while (pipe.Available() && (buf = pipe.GetBuffer(), count = pMax - buf.Pointer()))
+        while (pipe.Available() && (buf = pipe.GetBuffer(), (count = pMax - buf.Pointer())))
         {
             // if the DMA is already writing to another buffer, count will be bigger than buffer size regardless of
             // where the other buffer is located due to overflow
