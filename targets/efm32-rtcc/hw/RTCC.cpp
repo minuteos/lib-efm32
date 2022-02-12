@@ -58,6 +58,20 @@ void _RTCC::SetupWake(mono_t atTicks)
     }
 }
 
+uint64_t _RTCC::Timestamp()
+{
+    uint32_t time = CNT, comb = COMBCNT;
+    if (GETMASK(time, 17) != comb >> 15)
+    {
+        // if combcnt has overflowed between the two reads, time has to be exactly one higher
+        ASSERT(false);
+        time++;
+        ASSERT(GETMASK(time, 17) == comb >> 15);
+    }
+    time += TimeOffset();
+    return pack64(comb << 17, time);
+}
+
 #ifdef Ckernel
 
 async(_RTCC::WaitFor, unsigned channel)
