@@ -58,7 +58,7 @@ void _RTCC::SetupWake(mono_t atTicks)
     }
 }
 
-uint64_t _RTCC::Timestamp()
+uint64_t _RTCC::Timestamp(bool offset)
 {
     uint32_t time = CNT, comb = COMBCNT;
     if (GETMASK(time, 17) != comb >> 15)
@@ -68,7 +68,10 @@ uint64_t _RTCC::Timestamp()
         time++;
         ASSERT(GETMASK(time, 17) == comb >> 15);
     }
-    time += TimeOffset();
+    if (offset)
+    {
+        time += TimeOffset();
+    }
     return pack64(comb << 17, time);
 }
 

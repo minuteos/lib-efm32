@@ -64,7 +64,7 @@ public:
     //! Gets the real time, if set previously
     uint32_t Time() { return CNT + TimeOffset(); }
     //! Gets the real time, with fractional part in the lower 32-bits
-    uint64_t Timestamp();
+    uint64_t Timestamp(bool offset = true);
 
     //! Sets the real time
     void SetTime(uint32_t time) { TimeOffset() = nonzero(time - CNT); }
