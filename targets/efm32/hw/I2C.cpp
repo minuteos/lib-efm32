@@ -17,10 +17,17 @@
     STATE & I2C_STATE_BUSY ? ",BSY" : "", \
     STATUS, flags, IF);
 
-//#define EFM32_I2C_DEBUG   1
+#define DIAG_TRANS      1
+#define DIAG_READ       2
+#define DIAG_WRITE      4
+#define DIAG_DATA       8
+#define DIAG_ACK        16
+#define DIAG_SLAVE      32
+
+//#define EFM32_I2C_DEBUG   DIAG_TRANS
 
 #if EFM32_I2C_DEBUG
-#define DIAG(...)	DBGCL(Index() ? "I2C1" : "I2C0", __VA_ARGS__)
+#define DIAG(mask, ...)	if (((EFM32_I2C_DEBUG) & (mask)) == (mask)) { DBGCL(Index() ? "I2C1" : "I2C0", __VA_ARGS__); }
 #else
 #define DIAG(...)
 #endif
@@ -135,7 +142,7 @@ async_def()
         Abort();
         flags = ClearFlags();
 
-        DIAG("START >> %c %02X", op.read ? 'R' : 'W', op.address);
+        DIAG(DIAG_TRANS, "START >> %c %02X", op.read ? 'R' : 'W', op.address);
         Send(op.fullAddress);
         Start();
     }
@@ -147,7 +154,7 @@ async_def()
             async_return(false);
         }
 
-        DIAG("REP-START >> %c %02X", op.read ? 'R' : 'W', op.address);
+        DIAG(DIAG_TRANS, "REP-START >> %c %02X", op.read ? 'R' : 'W', op.address);
         Start();
         Send(op.fullAddress);
     }
@@ -216,12 +223,12 @@ async_def(uint32_t wx)
             data[f.wx] = Receive();
             if (f.wx + 1 == op.length)
             {
-                DIAG("%02X >NAK", data[f.wx]);
+                DIAG(DIAG_READ | DIAG_ACK, "%02X >NAK", data[f.wx]);
                 NACK();
             }
             else
             {
-                DIAG("%02X >ACK", data[f.wx]);
+                DIAG(DIAG_READ | DIAG_ACK, "%02X >ACK", data[f.wx]);
                 ACK();
             }
         }
@@ -234,7 +241,7 @@ async_def(uint32_t wx)
     if (f.wx != op.length || op.stop)
     {
 fail:
-        DIAG("STOP");
+        DIAG(DIAG_TRANS, "STOP");
         Stop();
         TransactionCleanup();
     }
@@ -253,7 +260,7 @@ async_def(uint32_t wx)
 
     for (f.wx = 0; f.wx < op.length; f.wx++)
     {
-        DIAG(">> %02X (Data %d)", data[f.wx], f.wx);
+        DIAG(DIAG_WRITE | DIAG_DATA, ">> %02X (Data %d)", data[f.wx], f.wx);
         Send(data[f.wx]);
 
         for (;;)
@@ -275,12 +282,12 @@ async_def(uint32_t wx)
             }
             else if (flags.nack)
             {
-                DIAG("<NAK");
+                DIAG(DIAG_WRITE | DIAG_ACK, "<NAK");
                 goto success;
             }
             else if (flags.ack)
             {
-                DIAG("<ACK");
+                DIAG(DIAG_WRITE | DIAG_ACK, "<ACK");
                 break;
             }
             else
@@ -296,13 +303,13 @@ success:
 fail:
         if (BusHeld())
         {
-            DIAG("STOP");
+            DIAG(DIAG_TRANS, "STOP");
             Stop();
         }
         TransactionCleanup();
     }
 
-    DIAG("DONE");
+    DIAG(DIAG_TRANS, "DONE");
     async_return(f.wx);
 }
 async_end
@@ -381,7 +388,7 @@ async_def(
             if (State() == BusState::BusAddr && BusBusy() && BusHeld())
             {
                 auto addr = Receive();
-                DIAG("SLAVE << %c %02X", GETBIT(addr, 0) ? 'R' : 'W', addr);
+                DIAG(DIAG_SLAVE, "SLAVE << %c %02X", GETBIT(addr, 0) ? 'R' : 'W', addr);
                 if (request == SlaveRequest::Any || IsTransmitter() == (request == SlaveRequest::Read))
                 {
                     // must not sleep while communicating
@@ -414,7 +421,7 @@ async_def(uint32_t wx)
 
     for (f.wx = 0; f.wx < length; f.wx++)
     {
-        DIAG(">> %02X (Data %d)", data[f.wx], f.wx);
+        DIAG(DIAG_WRITE | DIAG_DATA, ">> %02X (Data %d)", data[f.wx], f.wx);
         Send(data[f.wx]);
 
         for (;;)
@@ -435,19 +442,19 @@ async_def(uint32_t wx)
             }
             else if (flags.nack)
             {
-                DIAG("<NAK");
+                DIAG(DIAG_WRITE | DIAG_ACK, "<NAK");
                 goto done;
             }
             else if (flags.ack)
             {
-                DIAG("<ACK");
+                DIAG(DIAG_WRITE | DIAG_ACK, "<ACK");
                 break;
             }
         }
     }
 
 done:
-    DIAG("DONE");
+    DIAG(DIAG_TRANS, "DONE");
     async_return(f.wx);
 }
 async_end
@@ -458,7 +465,7 @@ async_def()
     // slave must send something until master terminates the transaction
     while (SlaveActive() && IsTransmitter())
     {
-        DIAG(">> 00 (DUMMY)");
+        DIAG(DIAG_SLAVE, ">> 00 (DUMMY)");
         Send(0);
         await_mask_not_ms(IF, IEN = AwaitFlagsSlaveWrite, 0, I2C_TIMEOUT);
         ClearFlags();
