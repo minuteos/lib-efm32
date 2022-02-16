@@ -62,7 +62,7 @@ public:
     uint32_t Ticks() { return COMBCNT; }
 
     //! Gets the real time, if set previously
-    uint32_t Time() { return CNT + TimeOffset(); }
+    uint32_t Time(bool offset = true) { return CNT + (offset ? TimeOffset() : 0); }
     //! Gets the real time, with fractional part in the lower 32-bits
     uint64_t Timestamp(bool offset = true);
 
