@@ -41,16 +41,38 @@ void _efm32_startup()
     ITM->TCR = 0;
 
     // initialize TPIU
+#if SWV_MANCHESTER
+    TPI->SPPR = 1;		// Manchester protocol
+#else
     TPI->SPPR = 2;		// NRZ protocol
+#endif
     TPI->ACPR = ((CMU->GetTraceFrequency() + SWV_BAUD_RATE / 2) / SWV_BAUD_RATE) - 1;
     TPI->FFCR = 0x100;  // EnFTC
 
+#if SWV_CPU_TRACE
+    DWT->CTRL = (DWT->CTRL
+        & ~(DWT_CTRL_SYNCTAP_Msk | DWT_CTRL_POSTINIT_Msk | DWT_CTRL_POSTPRESET_Msk))
+        | DWT_CTRL_EXCTRCENA_Msk | DWT_CTRL_EXCEVTENA_Msk
+        | DWT_CTRL_PCSAMPLENA_Msk
+        | (3 << DWT_CTRL_SYNCTAP_Pos)
+        | DWT_CTRL_CYCTAP_Msk
+        | (1 << DWT_CTRL_POSTINIT_Pos)
+        | (15 << DWT_CTRL_POSTPRESET_Pos)
+        | DWT_CTRL_CYCCNTENA_Msk;
+#endif
     // enable ITM
 #ifdef ITM_TCR_TRACEBUSID_Pos
-    ITM->TCR = (1 << ITM_TCR_TRACEBUSID_Pos) | ITM_TCR_SWOENA_Msk | ITM_TCR_ITMENA_Msk;
+    ITM->TCR = (1 << ITM_TCR_TRACEBUSID_Pos)
 #else
-    ITM->TCR = (1 << ITM_TCR_TraceBusID_Pos) | ITM_TCR_SWOENA_Msk | ITM_TCR_ITMENA_Msk;
+    ITM->TCR = (1 << ITM_TCR_TraceBusID_Pos)
 #endif
+#if SWV_CPU_TRACE
+        | (3 << ITM_TCR_GTSFREQ_Pos)
+        | (3 << ITM_TCR_TSPrescale_Pos)
+        | ITM_TCR_SYNCENA_Msk | ITM_TCR_DWTENA_Msk
+#endif
+        | ITM_TCR_SWOENA_Msk | ITM_TCR_ITMENA_Msk
+        ;
     ITM->TER = ~0u;		// enable all channels
 #endif
 }

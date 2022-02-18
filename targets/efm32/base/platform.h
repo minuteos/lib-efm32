@@ -12,7 +12,11 @@
 #define CORTEX_STARTUP_BEFORE_C_INIT	_efm32_c_startup
 
 #ifndef SWV_BAUD_RATE
+#if SWV_MANCHESTER
+#define SWV_BAUD_RATE   400000
+#else
 #define SWV_BAUD_RATE   3200000
+#endif
 #endif
 
 #ifndef EFM32_WATCHDOG_TIMEOUT
