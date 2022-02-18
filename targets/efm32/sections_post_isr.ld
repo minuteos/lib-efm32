@@ -20,6 +20,7 @@ SECTIONS {
         . = __app_start + 0xFC;     /* properties themselves must be at 0xFC */
         __app_properties = .;
         KEEP(*(.application_properties));
+        . = ALIGN(8);               /* do not leave a hole before the next section */
     } >FLASH =0xFF
 
     .text.gatt : {
