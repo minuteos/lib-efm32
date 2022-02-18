@@ -161,7 +161,7 @@ async_def()
 
     for (;;)
     {
-        bool timeout = !await_mask_not_ms(IF, IEN = AwaitFlags, 0, I2C_TIMEOUT);
+        bool timeout = !await_mask_not_ms(IF, PrepWait(AwaitFlags), 0, I2C_TIMEOUT);
         flags = ClearFlags();
 
         if (timeout)
@@ -203,7 +203,7 @@ async_def(uint32_t wx)
 
     for (f.wx = 0; f.wx < op.length; f.wx++)
     {
-        bool timeout = !await_mask_not_ms(IF, IEN = AwaitFlagsNoAck, 0, I2C_TIMEOUT);	// don't care about ACK or NAK
+        bool timeout = !await_mask_not_ms(IF, PrepWait(AwaitFlagsNoAck), 0, I2C_TIMEOUT);	// don't care about ACK or NAK
         auto flags = ClearFlags();
 
         if (timeout)
@@ -265,7 +265,7 @@ async_def(uint32_t wx)
 
         for (;;)
         {
-            bool timeout = !await_mask_not_ms(IF, IEN = AwaitFlags, 0, I2C_TIMEOUT);
+            bool timeout = !await_mask_not_ms(IF, PrepWait(AwaitFlags), 0, I2C_TIMEOUT);
             auto flags = ClearFlags();
 
             if (timeout)
@@ -379,7 +379,7 @@ async_def(
         for (;;)
         {
             // wait for the right bus state
-            if (!await_mask_not_timeout(IF, IEN = I2C_IF_ADDR, 0, timeout))
+            if (!await_mask_not_timeout(IF, PrepWait(I2C_IF_ADDR), 0, timeout))
             {
                 break;
             }
@@ -426,7 +426,7 @@ async_def(uint32_t wx)
 
         for (;;)
         {
-            bool timeout = !await_mask_not_ms(IF, IEN = AwaitFlagsSlaveWrite, 0, I2C_TIMEOUT);
+            bool timeout = !await_mask_not_ms(IF, PrepWait(AwaitFlagsSlaveWrite), 0, I2C_TIMEOUT);
             auto flags = ClearFlags();
 
             if (timeout)
@@ -467,7 +467,7 @@ async_def()
     {
         DIAG(DIAG_SLAVE, ">> 00 (DUMMY)");
         Send(0);
-        await_mask_not_ms(IF, IEN = AwaitFlagsSlaveWrite, 0, I2C_TIMEOUT);
+        await_mask_not_ms(IF, PrepWait(AwaitFlagsSlaveWrite), 0, I2C_TIMEOUT);
         ClearFlags();
     }
 

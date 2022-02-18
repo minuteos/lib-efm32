@@ -212,6 +212,7 @@ public:
     bool WillAbort() { return STATUS & I2C_STATUS_PABORT; }
 
     StateFlags ClearFlags(uint ignore = 0) { return EFM32_IFC_READ(this) & ~ignore; }
+    uint32_t PrepWait(uint32_t mask) { IEN = mask; IRQClear(); return mask; }
 
     void Send(uint b) { TXDATA = b; }
     uint Receive() { return RXDATA; }
