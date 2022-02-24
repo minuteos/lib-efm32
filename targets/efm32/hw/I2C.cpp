@@ -8,14 +8,14 @@
 
 #include "I2C.h"
 
-#define DBGERR(error)	DBGCL(Index() ? "I2C1" : "I2C0", error ": %s%s%s%s%s%s %X %X %X", \
+#define DBGERR(error)	DBGCL(Index() ? "I2C1" : "I2C0", error ": %s%s%s%s%s%s %X %X %X %X", \
     STRINGS("IDLE", "WAIT", "START", "ADDR", "ADDRACK", "DATA", "DATAACK", "???")[(STATE >> 5) & 7], \
     STATE & I2C_STATE_BUSHOLD ? ",HLD" : "", \
     STATE & I2C_STATE_NACKED ? ",NAK" : "", \
     STATE & I2C_STATE_TRANSMITTER ? ",TX" : "", \
     STATE & I2C_STATE_MASTER ? ",MAS" : "", \
     STATE & I2C_STATE_BUSY ? ",BSY" : "", \
-    STATUS, flags, IF);
+    STATE, STATUS, flags, IF);
 
 #define DIAG_TRANS      1
 #define DIAG_READ       2
