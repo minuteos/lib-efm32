@@ -348,6 +348,18 @@ bool I2C::HandleError(StateFlags flags)
     return false;
 }
 
+bool I2C::HandleSlaveArbLost(StateFlags flags)
+{
+    if (flags.arbitrationLost)
+    {
+        DBGERR("slave arbitration lost - resetting to avoid SCL hang (see errata)");
+        Abort();
+        return true;
+    }
+
+    return false;
+}
+
 async(I2C::OnUnhandledErrorAsync, StateFlags flags)
 async_def()
 {
@@ -379,11 +391,15 @@ async_def(
         for (;;)
         {
             // wait for the right bus state
-            if (!await_mask_not_timeout(IF, PrepWait(I2C_IF_ADDR), 0, timeout))
+            if (!await_mask_not_timeout(IF, PrepWait(I2C_IF_ADDR | I2C_IF_ARBLOST), 0, timeout))
             {
                 break;
             }
-            ClearFlags();
+
+            if (HandleSlaveArbLost(ClearFlags()))
+            {
+                continue;
+            }
 
             if (State() == BusState::BusAddr && BusBusy() && BusHeld())
             {
@@ -435,6 +451,10 @@ async_def(uint32_t wx)
                 goto done;
             }
 
+            if (HandleSlaveArbLost(flags))
+            {
+                goto done;
+            }
             if (HandleError(flags))
             {
                 DBGERR("error waiting for write data ACK");
@@ -468,7 +488,7 @@ async_def()
         DIAG(DIAG_SLAVE, ">> 00 (DUMMY)");
         Send(0);
         await_mask_not_ms(IF, PrepWait(AwaitFlagsSlaveWrite), 0, I2C_TIMEOUT);
-        ClearFlags();
+        HandleSlaveArbLost(ClearFlags());
     }
 
     TransactionCleanup();

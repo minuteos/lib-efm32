@@ -295,6 +295,7 @@ private:
     void TransactionInit();
     void TransactionCleanup();
     bool HandleError(StateFlags flags);
+    bool HandleSlaveArbLost(StateFlags flags);
     async(OnUnhandledErrorAsync, StateFlags flags);
 };
 
