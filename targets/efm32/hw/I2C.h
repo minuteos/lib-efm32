@@ -220,11 +220,11 @@ public:
     bool SlaveActive() { return State() >= BusAddr; }
 
 #ifdef EFM32_GPIO_LINEAR_INDEX
-    void ConfigureScl(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, ROUTEPEN, 1, BYTES(1, 29)[Index()]); }
-    void ConfigureSda(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, ROUTEPEN, 0, BYTES(0, 28)[Index()]); }
+    void ConfigureScl(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd | GPIOPin::FlagFilter) { pin.ConfigureAlternate(mode, ROUTEPEN, 1, BYTES(1, 29)[Index()]); }
+    void ConfigureSda(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd | GPIOPin::FlagFilter) { pin.ConfigureAlternate(mode, ROUTEPEN, 0, BYTES(0, 28)[Index()]); }
 #elif defined(_SILICON_LABS_32B_SERIES_2)
-    void ConfigureScl(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(I2C, SCL)); }
-    void ConfigureSda(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(I2C, SDA)); }
+    void ConfigureScl(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd | GPIOPin::FlagFilter) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(I2C, SCL)); }
+    void ConfigureSda(GPIOPin pin, GPIOPin::Mode mode = GPIOPin::WiredAnd | GPIOPin::FlagFilter) { pin.ConfigureAlternate(mode, GPIO_ROUTE_ARGS(I2C, SDA)); }
 #endif
 
     bool Idle();
