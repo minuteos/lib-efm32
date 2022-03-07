@@ -13,13 +13,11 @@
 
 void _RTCC::Configure()
 {
-#ifdef _RTCC_CTRL_MASK
-    bool init = !CMU->RTCCEnabled();
     CMU->EnableRTCC();
-
+#ifdef _RTCC_CTRL_MASK
+    bool init = !(CTRL & RTCC_CTRL_ENABLE);
     CTRL = RTCC_CTRL_ENABLE | RTCC_CTRL_CNTPRESC_DIV32768;
 #else
-    CMU->EnableRTCC();
     bool init = false;
     if (CFG != RTCC_CFG_CNTPRESC_DIV32768)
     {
