@@ -169,7 +169,15 @@ public:
     //! Gets the current I2C clock frequency
     uint32_t OutputFrequency() const { return ClockFrequency() / ClockPeriod() / (CLKDIV + 1); }
     //! Sets the I2C Slave address
-    void SlaveAddress(uint32_t addr, uint32_t mask = 0x7F) { SADDR = addr << _I2C_SADDR_ADDR_SHIFT; SADDRMASK = mask << _I2C_SADDRMASK_MASK_SHIFT; }
+    void SlaveAddress(uint32_t addr, uint32_t mask = 0x7F)
+    {
+        SADDR = addr << _I2C_SADDR_ADDR_SHIFT;
+#ifdef _I2C_SADDRMASK_SADDRMASK_SHIFT
+        SADDRMASK = mask << _I2C_SADDRMASK_SADDRMASK_SHIFT;
+#else
+        SADDRMASK = mask << _I2C_SADDRMASK_MASK_SHIFT;
+#endif
+    }
 
 #ifdef I2C1
     IRQn_Type IRQn() const { return LOOKUP_TABLE(IRQn_Type, I2C0_IRQn, I2C1_IRQn)[Index()]; }
